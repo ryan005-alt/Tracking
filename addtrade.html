@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Journal de trading</title>
+    <link rel="stylesheet" href="../bootstrap5/bootstrap.min.css">
+    <link rel="stylesheet" href="theme-trackrecord.css">
+    <script src="../bootstrap5/bootstrap.bundle.min.js"></script>
+    <link rel="stylesheet" href="../bootstrap5/font-awesome.min.css">
+    <style>
+        body {
+            padding: 22px 10px;
+        }
+
+        .trade-page {
+            max-width: 980px;
+        }
+
+        .trade-title {
+            color: var(--text);
+            font-weight: 700;
+            margin-bottom: 18px !important;
+        }
+
+        .trade-form {
+            max-width: 760px;
+            margin: 0 auto;
+            padding: 24px !important;
+            border-radius: 14px !important;
+            background: var(--surface) !important;
+        }
+
+        .trade-form .form-label {
+            color: var(--muted);
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+
+        .trade-form .btn-primary {
+            width: 100%;
+            margin-top: 8px;
+            padding: 0.6rem 0.8rem;
+            font-weight: 600;
+        }
+
+        @media (max-width: 768px) {
+            .trade-form {
+                max-width: 100%;
+                padding: 16px !important;
+            }
+        }
+    </style>
+</head>
+
+<body onload="Load()">
+    <div class="container trade-page">
+        <h3 id="accountHeader" class="text-center mb-4 trade-title"></h3>
+        <form action="dbusers.php" class="form-control trade-form" method="post">
+            <input id="account_name" name="account_name" type="hidden">
+            <div class="mb-3 mt-3">
+                <label for="date" class="form-label">Date:</label>
+                <input type="date" class="form-control" id="trade_date" name="trade_date" >
+            </div>
+            <div class="mb-3 mt-3">
+                <label for="text" class="form-label">Symbol:</label>
+                <select class="form-select" name="symbol">
+                    <option>EURUSD</option>
+                    <option>GBPUSD</option>
+                    <option>USDJPY</option>
+                    <option>USDCAD</option>
+                    <option>AUDUSD</option>
+                    <option>AUDJPY</option>
+                    <option>AUDNZD</option>
+                    <option>AUDCHF</option>
+                    <option>EURAUD</option>
+                    <option>GBPAUD</option>
+                    <option>NZDCHF</option>
+                    <option>NZDUSD</option>
+                    <option>NZDJPY</option>
+                    <option>GBPNZD</option>
+                    <option>EURNZD</option>
+                    <option>EURJPY</option>
+                    <option>CHFJPY</option>
+                    <option>EURGBP</option>
+                    <option>GBPCAD</option>
+                    <option>CADJPY</option>
+                    <option>CADCHF</option>
+                    <option>EURCAD</option>
+                    <option>AUDCAD</option>
+                    <option>NZDCAD</option>
+                    <option>NZDJPY</option>
+                </select>
+            </div>
+            <div class="mb-3 mt-3">
+                <label for="text" class="form-label">Type:</label>
+                <select class="form-select" name="type">
+                    <option>BUY</option>
+                    <option>SELL</option>
+                </select>
+            </div>
+            <div class="mb-3 mt-3">
+                <label for="text" class="form-label">Session:</label>
+                <select class="form-select" name="session">
+                    <option>Asian</option>
+                    <option>London</option>
+                    <option>New York</option>
+                </select>
+            </div>
+            <div class="mb-3 mt-3">
+                <label for="text" class="form-label">Entry Price:</label>
+                <input type="text" class="form-control" id="amount" name="entry_price" placeholder="Enter amount">
+            </div>
+            <div class="mb-3 mt-3">
+                <label for="text" class="form-label">Stop Loss:</label>
+                <input type="text" class="form-control" id="amount" name="stop_loss" placeholder="Enter amount">
+            </div>
+            <div class="mb-3 mt-3">
+                <label for="text" class="form-label">Take Profit:</label>
+                <input type="text" class="form-control" id="amount" name="take_profit" placeholder="Enter amount">
+            </div>
+            <div class="mb-3 mt-3">
+                <label for="text" class="form-label">Exit Price:</label>
+                <input type="text" class="form-control" id="amount" name="exit_price" placeholder="Enter amount">
+            </div>
+            <div class="mb-3 mt-3">
+                <label for="text" class="form-label">P&L:</label>
+                <input type="text" class="form-control" id="amount" name="pnl" placeholder="Enter amount">
+            </div>
+            <button type="submit" class="btn btn-primary" name="addtrade">Add</button>
+        </form>
+    </div>
+</body>
+<script>
+    let userConnected = "";
+    function getQueryParam(name) {
+        let results = new RegExp('[?&]' + name + '=([^&#]*)').exec(window.location.href);
+        return results ? decodeURIComponent(results[1].replace(/\+/g, ' ')) : null;
+    }
+
+    async function Load() {
+        if (!window.localStorage.getItem("userConnected")) {
+            window.location.assign("seconnecter.html");
+            return;
+        }
+
+        userConnected = window.localStorage.getItem("userConnected");
+        let selectedAccount = getQueryParam('account');
+        try {
+            let resultat = await fetch(`http://localhost/www/Tracking-journal/account.php?account=${encodeURIComponent(userConnected)}`);
+            let datas = await resultat.json();
+            if (!datas || datas.length === 0) {
+                document.getElementById("accountHeader").innerText = "No account found for this user";
+                return;
+            }
+            let accountName = selectedAccount || datas[0].account_name;
+            document.getElementById("accountHeader").innerText = `Active account: ${accountName}`;
+            document.getElementById("account_name").value = accountName;
+        } catch (error) {
+            console.log(error);
+            document.getElementById("accountHeader").innerText = "Error while loading account";
+        }
+    }
+</script>
+
+</html>

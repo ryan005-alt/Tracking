@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Journal de trading</title>
+    <link rel="stylesheet" href="../bootstrap5/bootstrap.min.css">
+    <link rel="stylesheet" href="theme-trackrecord.css">
+    <script src="../bootstrap5/bootstrap.bundle.min.js"></script>
+    <link rel="stylesheet" href="../bootstrap5/font-awesome.min.css">
+    <style>
+        body {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px 10px;
+        }
+
+        .signup-wrapper {
+            max-width: 620px;
+            width: 100%;
+        }
+
+        .signup-card {
+            width: 100% !important;
+            margin: 0 !important;
+            padding: 22px !important;
+            border-radius: 14px !important;
+            background: var(--surface) !important;
+        }
+
+        .signup-card .form-label {
+            color: var(--muted);
+            font-weight: 600;
+        }
+
+        .signup-card .btn-primary {
+            margin-top: 4px;
+            font-weight: 600;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container signup-wrapper">
+        <form class="was-validated form-control signup-card" id="inscriptionForm" method="post">
+            <div id="errorMessage" class="alert alert-danger" style="display: none;"></div>
+            <div class="mb-3 mt-3">
+                <label for="nom" class="form-label">Last name:</label>
+                <input type="text" class="form-control" id="nom" placeholder="Enter your last name" name="nom" required>
+            </div>
+            <div class="mb-3 mt-3">
+                <label for="prenom" class="form-label">First name:</label>
+                <input type="text" class="form-control" id="prenom" placeholder="Enter your first name" name="prenom"
+                    required>
+            </div>
+            <div class="mb-3 mt-3">
+                <label for="username" class="form-label">Username:</label>
+                <input type="text" class="form-control" id="username" placeholder="Enter your username" name="username"
+                    required>
+                <small id="usernameError" class="text-danger" style="display: none;"></small>
+            </div>
+            <div class="mb-3 mt-3">
+                <label for="email" class="form-label">Email:</label>
+                <input type="email" class="form-control" id="email" placeholder="Enter email" name="email" required>
+                <small id="emailError" class="text-danger" style="display: none;"></small>
+            </div>
+            <div class="mb-3">
+                <label for="password" class="form-label">Password:</label>
+                <input type="password" class="form-control" id="password" placeholder="Enter password" name="password"
+                    required>
+            </div>
+            <div class="form-check mb-3">
+                <label class="form-check-label">
+                    <input class="form-check-input" type="checkbox" name="remember"> Remember me
+                </label>
+            </div>
+            <button type="submit" class="btn btn-primary w-100"
+                name="inscription">Sign up</button>
+
+        </form>
+    </div>
+</body>
+<script>
+    async function validateForm() {
+        const username = document.getElementById("username").value;
+        const email = document.getElementById("email").value;
+        const usernameError = document.getElementById("usernameError");
+        const emailError = document.getElementById("emailError");
+        
+        usernameError.style.display = "none";
+        emailError.style.display = "none";
+        document.getElementById("errorMessage").style.display = "none";
+        
+        let hasError = false;
+        
+        try {
+            let response = await fetch(`http://localhost/www/Tracking-journal/check-user.php?username=${encodeURIComponent(username)}&email=${encodeURIComponent(email)}`);
+            let result = await response.json();
+            
+            if (result.usernameExists) {
+                usernameError.innerText = "This username already exists";
+                usernameError.style.display = "block";
+                document.getElementById("username").focus();
+                hasError = true;
+            }
+            
+            if (result.emailExists) {
+                emailError.innerText = "This email already exists";
+                emailError.style.display = "block";
+                if (!hasError) {
+                    document.getElementById("email").focus();
+                }
+                hasError = true;
+            }
+        } catch (error) {
+            console.log(error);
+        }
+        
+        return !hasError;
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.getElementById("inscriptionForm");
+        form.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            if (!await validateForm()) {
+                return;
+            }
+            
+            const formData = new FormData(form);
+            formData.append('inscription', 'true');
+            
+            try {
+                let response = await fetch('dbusers.php', {
+                    method: 'POST',
+                    body: formData
+                });
+                let result = await response.json();
+                
+                if (result.success) {
+                    // Stocker le username dans localStorage pour la session
+                    localStorage.setItem("userConnected", document.getElementById("username").value);
+                    window.location.href = "account.html";
+                } else if (result.error === "username_exists") {
+                    document.getElementById("usernameError").innerText = "This username already exists";
+                    document.getElementById("usernameError").style.display = "block";
+                    document.getElementById("username").focus();
+                } else if (result.error === "email_exists") {
+                    document.getElementById("emailError").innerText = "This email already exists";
+                    document.getElementById("emailError").style.display = "block";
+                    document.getElementById("email").focus();
+                } else {
+                    document.getElementById("errorMessage").innerText = "Error during registration";
+                    document.getElementById("errorMessage").style.display = "block";
+                }
+            } catch (error) {
+                console.log(error);
+            }
+        });
+    });
+</script>
+</html>

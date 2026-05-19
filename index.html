@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Journal de trading</title>
+    <link rel="stylesheet" href="../bootstrap5/bootstrap.min.css">
+    <script src="../bootstrap5/bootstrap.bundle.min.js"></script>
+    <link rel="stylesheet" href="../bootstrap5/font-awesome.min.css">
+    <style>
+        /* Video background styles */
+        .bg-video {
+            position: fixed;
+            right: 0;
+            bottom: 0;
+            min-width: 100%;
+            min-height: 100%;
+            width: auto;
+            height: auto;
+            z-index: -1;
+            object-fit: cover;
+        }
+
+        .video-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.35);
+            z-index: 0;
+        }
+
+        .page-content {
+            position: relative;
+            z-index: 1;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            color: #fff;
+            padding: 2rem;
+            text-align: center;
+        }
+
+        .how-it-works {
+            margin-top: 2rem;
+            width: 100%;
+            max-width: 1100px;
+        }
+
+        .guide-card {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 14px;
+            backdrop-filter: blur(4px);
+            height: 100%;
+            overflow: hidden;
+            text-align: left;
+            color: #fff;
+            transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+        }
+
+        .guide-card:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 10px 24px rgba(0, 0, 0, 0.28);
+            border-color: rgba(255, 255, 255, 0.45);
+        }
+
+        .guide-card:hover img {
+            transform: scale(1.04);
+        }
+
+        .guide-card img {
+            width: 100%;
+            height: 160px;
+            object-fit: cover;
+            transition: transform 0.3s ease;
+        }
+
+        .step-badge {
+            display: inline-block;
+            font-size: 0.8rem;
+            background: rgba(13, 110, 253, 0.75);
+            padding: 0.25rem 0.6rem;
+            border-radius: 999px;
+            margin-bottom: 0.5rem;
+        }
+
+        /* Small screens: reduce video quality impact */
+        @media (max-width: 600px) {
+            .bg-video {
+                display: none;
+            }
+
+            .video-overlay {
+                background: rgba(0, 0, 0, 0.5);
+            }
+        }
+
+        /* Navbar spacing so content isn't hidden under fixed navbar */
+        body {
+            padding-top: 72px;
+        }
+
+        .navbar-logo {
+            max-height: 40px;
+            width: auto;
+        }
+        .d-none{
+            font-size: 1rem;
+        }
+        nav {
+            background-color: rgba(110, 140, 241, 0.5) !important;
+            padding-bottom: 2px !important;
+        }
+
+        .glow-text-neon {
+            color: #fff;
+            /* Couleur de base du texte (blanc) */
+            font-weight: bold;
+            text-transform: uppercase;
+            /* Optionnel, pour correspondre à l'exemple */
+
+            /* Applique plusieurs couches d'ombres pour créer la lueur */
+            /* Structure : x-offset y-offset flou couleur */
+            text-shadow:
+                0 0 5px rgba(255, 255, 255, 0.521),
+                /* Lueur blanche interne proche */
+                0 0 10px rgba(0, 255, 170, 0.425),
+                /* Lueur cyan/verte moyenne */
+                0 0 20px rgba(0, 255, 170, 0.384),
+                /* Lueur cyan/verte large */
+                0 0 40px rgba(0, 255, 170, 0.3);
+            /* Lueur cyan/verte très diffuse */
+
+            /* Ajoute une animation douce de pulsation */
+            animation: neon-pulse 2.5s ease-in-out infinite alternate;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Background video: place your files in Tracking-journal/videos/ as bg.mp4 (and optionally bg.webm, poster.jpg) -->
+    <video class="bg-video" id="bgVideo" autoplay muted loop playsinline poster="videos/bg.jpg">
+        <source src="../vidéo&track/istockphoto-1488522537-640_adpp_is.mp4" type="video/mp4">
+        <!-- Fallback image/text -->
+    </video>
+    <div class="video-overlay" aria-hidden="true"></div>
+    <!-- Navbar : logo à gauche, liens et boutons alignés à droite -->
+    <nav class="navbar navbar-expand-lg navbar-dark fixed-top">
+        <div class="container-fluid">
+            <a class="navbar-brand d-flex align-items-center" href="#">
+                <!-- Replace the src with your logo path; keep the id to change via JS if needed -->
+                <img id="siteLogo" src="../vidéo&track/3D Blue Background Design.jfif" alt="Logo" class="navbar-logo me-2" onerror="this.style.display='none'">
+                <span class="d-none d-lg-inline">My Trading <br> Journal</span>
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav"
+                aria-controls="mainNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="mainNav">
+                <ul class="navbar-nav ms-auto mb-2 mb-lg-0 align-items-lg-center">
+                    <!-- Pré-définir quelques liens <a> que tu pourras modifier plus tard -->
+                    <li class="nav-item ms-2"><a class="btn btn-outline-light" href="seconnecter.html" id="btnLogin">Sign
+                            in</a></li>
+                    <li class="nav-item ms-2"><a class="btn btn-primary text-white" href="inscription.html"
+                            id="btnSignup">Sign up</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <main class="page-content container">
+        <div class="mb-4">
+            <h2 class="glow-text-neon">TAKE CONTROL OF YOUR TRADING</h2>
+            <p>Create your account, connect your trading workflow, and track performance in one place.</p>
+        </div>
+
+        <section class="how-it-works">
+            <h4 class="mb-4">How to use the platform</h4>
+            <div class="row g-3">
+                <div class="col-12 col-md-6 col-lg-3">
+                    <div class="guide-card">
+                        <img src="https://images.unsplash.com/photo-1611224923853-80b023f02d71?auto=format&fit=crop&w=600&q=80" alt="Login interface">
+                        <div class="p-3">
+                            <span class="step-badge">Step 1</span>
+                            <h6>Sign in</h6>
+                            <p class="mb-0">Access your workspace securely through the platform login screen.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-12 col-md-6 col-lg-3">
+                    <div class="guide-card">
+                        <img src="https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=600&q=80" alt="Account setup dashboard">
+                        <div class="p-3">
+                            <span class="step-badge">Step 2</span>
+                            <h6>Set up your trading account</h6>
+                            <p class="mb-0">Create and organize trading accounts to structure your journal by portfolio.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-12 col-md-6 col-lg-3">
+                    <div class="guide-card">
+                        <img src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=600&q=80" alt="Trade entry interface">
+                        <div class="p-3">
+                            <span class="step-badge">Step 3</span>
+                            <h6>Log your trades</h6>
+                            <p class="mb-0">Add entries, screenshots, and notes to capture every trading decision.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-12 col-md-6 col-lg-3">
+                    <div class="guide-card">
+                        <img src="https://images.unsplash.com/photo-1551434678-e076c223a692?auto=format&fit=crop&w=600&q=80" alt="Performance analytics dashboard">
+                        <div class="p-3">
+                            <span class="step-badge">Step 4</span>
+                            <h6>Review performance</h6>
+                            <p class="mb-0">Analyze results and equity growth with clear dashboard performance metrics.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+</body>
+
+</html>

@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Journal de trading</title>
+    <link rel="stylesheet" href="../bootstrap5/bootstrap.min.css">
+    <link rel="stylesheet" href="theme-trackrecord.css">
+    <script src="../bootstrap5/bootstrap.bundle.min.js"></script>
+    <link rel="stylesheet" href="../bootstrap5/font-awesome.min.css">
+    <style>
+        body {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px 10px;
+        }
+
+        .auth-wrapper {
+            max-width: 520px;
+            width: 100%;
+        }
+
+        .auth-card {
+            width: 100% !important;
+            margin: 0 !important;
+            padding: 22px !important;
+            border-radius: 14px !important;
+            background: var(--surface) !important;
+        }
+
+        .auth-card .form-label {
+            color: var(--muted);
+            font-weight: 600;
+        }
+
+        .auth-card .btn-primary {
+            width: 100%;
+            margin-top: 4px;
+            font-weight: 600;
+        }
+
+        .auth-hint {
+            margin-top: 12px;
+            color: var(--muted);
+        }
+
+        #info {
+            font-size: 1rem;
+            margin-top: 10px;
+            text-align: center;
+            color: var(--negative-color);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container auth-wrapper">
+        <form class="form-control auth-card" onsubmit="return Submit()" method="dialog">
+            <div class="mb-3 mt-3">
+                <label for="username" class="form-label">Username:</label>
+                <input type="text" class="form-control" id="username" placeholder="Enter username" name="username">
+            </div>
+            <div class="mb-3">
+                <label for="password" class="form-label">Password:</label>
+                <input type="password" class="form-control" id="password" placeholder="Enter password" name="password">
+            </div>
+            <div class="form-check mb-3">
+                <label class="form-check-label">
+                    <input class="form-check-input" type="checkbox" name="remember"> Remember me
+                </label>
+            </div>
+            <button type="submit" class="btn btn-primary">Sign in</button>
+            <p class="text-end auth-hint">Click <a href="inscription.html">here</a> if you do not have an account yet</p>
+            <h1 id="info"></h1>
+        </form>
+    </div>
+</body>
+<script>    
+    function Submit() {
+        username = document.getElementById("username").value;
+        password = document.getElementById("password").value;
+        getData(username, password);
+    }
+    async function getData(username, password) {
+        try {
+            let resultat = await fetch(`http://localhost/www/Tracking-journal/dbusers.php?connexion=${username}`);
+            let data = await resultat.json();
+            console.log(data);
+            if (data==false) {
+                document.getElementById("info").innerText= "Username error"
+            } else {
+                document.getElementById("info").innerText= "User ok"
+                if (data.password==password) {
+                    window.localStorage.setItem("userConnected", data.username)
+                    
+                    if (data.has_account) {
+                        window.location.assign("home.html");
+                    } else {
+                        window.location.assign("account.html");
+                    }
+                } else {
+                     document.getElementById("info").innerText= "Password error"
+                }
+            }
+        } catch (error) {
+            
+        }
+    }
+</script>
+
+</html>

@@ -1,0 +1,1946 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Journal de trading</title>
+    <link rel="stylesheet" href="../bootstrap5/bootstrap.min.css">
+    <link rel="stylesheet" href="theme-trackrecord.css">
+    <script src="../bootstrap5/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            padding: 16px;
+        }
+
+        .container-fluid {
+            padding-left: 8px;
+            padding-right: 8px;
+        }
+
+        #analyticsTitle {
+            color: var(--text);
+            margin-bottom: 20px;
+            font-weight: 700;
+            letter-spacing: 0.3px;
+        }
+
+        .nav-tabs {
+            border-bottom: 1px solid var(--border);
+        }
+
+        .nav-tabs .nav-link {
+            color: var(--muted);
+            border: 1px solid transparent;
+        }
+
+        .nav-tabs .nav-link.active {
+            color: var(--text);
+            background: var(--surface);
+            border-color: var(--border) var(--border) transparent;
+            border-radius: 10px 10px 0 0;
+        }
+
+        .card.bg-primary,
+        .card.bg-success,
+        .card.bg-info,
+        .card.bg-warning {
+            background: var(--surface) !important;
+            color: var(--text) !important;
+        }
+
+        .status-label {
+            font-weight: 600;
+        }
+
+        #globalStats .card {
+            background-color: var(--surface) !important;
+            border: 1px solid var(--border) !important;
+            border-radius: 12px !important;
+            box-shadow: var(--shadow);
+            transition: transform 0.2s, border-color 0.2s;
+            overflow: hidden;
+        }
+
+        #globalStats .card:hover {
+            transform: translateY(-3px);
+            border-color: var(--primary) !important;
+        }
+
+        #globalStats .card-body {
+            padding: 20px;
+        }
+
+        #globalStats .card-title {
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            color: var(--muted) !important;
+            margin-bottom: 8px;
+            letter-spacing: 0.5px;
+            font-weight: 600;
+        }
+
+        #globalStats .card h3 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin: 0;
+            color: var(--text) !important;
+            line-height: 1.25;
+        }
+
+        /* Total R & Total PnL: green / red in light; blue / red in dark (via theme vars) */
+        #globalStats .card h3#totalR.total-r-positive,
+        #globalStats .card h3#totalPnL.total-pnl-positive {
+            color: var(--positive-color) !important;
+        }
+
+        #globalStats .card h3#totalR.total-r-negative,
+        #globalStats .card h3#totalPnL.total-pnl-negative {
+            color: var(--negative-color) !important;
+        }
+
+        /* Overview — Max Drawdown always emphasized as loss risk */
+        #overview #maxDrawdown {
+            color: var(--negative-color) !important;
+            font-weight: 700;
+        }
+
+        /* Sortable column headers: hint on hover, arrow when active */
+        th.th-sortable {
+            cursor: pointer;
+            user-select: none;
+            white-space: nowrap;
+        }
+
+        th.th-sortable .sort-indicator {
+            display: inline-block;
+            margin-left: 0.2rem;
+            min-width: 0.65em;
+            font-size: 0.65em;
+            line-height: 1;
+            vertical-align: middle;
+            opacity: 0;
+            transition: opacity 0.15s ease;
+        }
+
+        th.th-sortable:hover .sort-indicator {
+            opacity: 0.55;
+        }
+
+        th.th-sortable:hover .sort-indicator::before {
+            content: '⇅';
+        }
+
+        th.th-sortable.sort-active:hover .sort-indicator,
+        th.th-sortable.sort-active .sort-indicator {
+            opacity: 1;
+        }
+
+        th.th-sortable.sort-active.sort-asc .sort-indicator::before {
+            content: '▲';
+        }
+
+        th.th-sortable.sort-active.sort-desc .sort-indicator::before {
+            content: '▼';
+        }
+
+        #globalStats .donut-wrapper {
+            position: absolute;
+            top: 18px;
+            right: 18px;
+            width: 56px;
+            height: 56px;
+        }
+
+        #globalStats .donut-chart {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: conic-gradient(var(--positive-color) 0deg 180deg, var(--negative-color) 180deg 360deg);
+            mask-image: radial-gradient(circle, transparent 50%, black 51%);
+            -webkit-mask-image: radial-gradient(circle, transparent 50%, black 51%);
+        }
+
+        #globalStats {
+            gap: 12px;
+        }
+
+        #globalStats .kpi-col {
+            flex: 1 1 185px;
+            max-width: none;
+            padding: 0;
+        }
+
+        .navbar-logo {
+            max-height: 40px;
+            width: auto;
+        }
+
+        .d-none {
+            font-size: 1rem;
+        }
+
+        #commentModal .modal-content {
+            border-radius: 14px;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            color: var(--text);
+            box-shadow: var(--shadow);
+        }
+
+        #commentModal .modal-header,
+        #commentModal .modal-footer {
+            border-color: var(--border);
+        }
+
+        #commentModal .modal-title {
+            font-weight: 700;
+            letter-spacing: 0.2px;
+        }
+
+        #commentModal .form-label {
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        #tradeComment,
+        #tradeImageFile {
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            background: var(--surface-soft);
+            color: var(--text);
+        }
+
+        #tradeComment::placeholder {
+            color: var(--muted);
+        }
+
+        #tradeComment:focus,
+        #tradeImageFile:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.18);
+        }
+
+        #imagePreview {
+            min-height: 120px;
+            padding: 12px;
+            border: 1px dashed var(--border);
+            border-radius: 10px;
+            background: var(--surface-soft);
+        }
+
+        #imagePreview .note-image-thumb {
+            width: 140px;
+            height: 100px;
+            object-fit: cover;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            transition: transform 0.2s ease;
+            cursor: pointer;
+            display: block;
+        }
+
+        #imagePreview .note-image-thumb:hover {
+            transform: scale(1.02);
+        }
+
+        #imagePreview .note-image-remove {
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            line-height: 1;
+            padding: 0 0.35rem;
+            border-radius: 6px;
+            z-index: 2;
+        }
+
+        #imagePreview .text-muted {
+            color: var(--muted) !important;
+            margin-bottom: 0;
+        }
+    </style>
+</head>
+
+<body onload="Load()">
+    <nav class="navbar navbar-expand-sm bg-light">
+
+        <div class="container-fluid">
+            <a class="navbar-brand d-flex align-items-center" href="./home.html">
+                <!-- Replace the src with your logo path; keep the id to change via JS if needed -->
+                <img id="siteLogo" src="../vidéo&track/3D Blue Background Design.jfif" alt="Logo"
+                    class="navbar-logo me-2" onerror="this.style.display='none'">
+                <span class="d-none d-lg-inline">My Trading <br> Journal</span>
+            </a>
+            <!-- Links -->
+            <ul class="navbar-nav">
+                <li class="nav-item">
+                    <a class="nav-link" href="./home.html">Dashboard</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="./analytics.html">Analytics</a>
+                </li>
+            </ul>
+        </div>
+        <div>
+            <button type="button" class="btn me-2 theme-toggle-btn" onclick="toggleTheme()" id="themeToggleBtn"
+                aria-label="Toggle theme" title="Toggle theme">
+                <span class="theme-icon" aria-hidden="true"></span>
+            </button>
+        </div>
+        <div class="dropdown float-end">
+            <button type="button" class="btn btn-primary dropdown-toggle manage-account-btn" data-bs-toggle="dropdown">
+                Manage account
+            </button>
+            <ul class="dropdown-menu manage-account-menu" id="accounts">
+            </ul>
+        </div>
+    </nav>
+    <div class="container-fluid" style="margin-top: 30px;">
+        <h2 id="analyticsTitle">Select an account to view analytics</h2>
+
+        <!-- Statistiques Globales -->
+        <div id="globalStats" class="row mb-4" style="display: none;">
+            <div class="kpi-col">
+                <div class="card bg-primary text-white">
+                    <div class="card-body">
+                        <h5 class="card-title">Trades Total</h5>
+                        <h3 id="totalTrades">0</h3>
+                    </div>
+                </div>
+            </div>
+            <div class="kpi-col">
+                <div class="card bg-success text-white">
+                    <div class="card-body">
+                        <h5 class="card-title">Win Rate</h5>
+                        <h3 id="winRate">0%</h3>
+                        <div class="donut-wrapper">
+                            <div class="donut-chart" id="winRateDonut" title="Winners: 0% | Losers: 100%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="kpi-col">
+                <div class="card bg-info text-white">
+                    <div class="card-body">
+                        <h5 class="card-title">P&L Total</h5>
+                        <h3 id="totalPnL">0</h3>
+                    </div>
+                </div>
+            </div>
+            <div class="kpi-col">
+                <div class="card bg-warning text-white">
+                    <div class="card-body">
+                        <h5 class="card-title">Profit Factor</h5>
+                        <h3 id="profitFactor">0</h3>
+                    </div>
+                </div>
+            </div>
+            <div class="kpi-col">
+                <div class="card bg-warning text-white">
+                    <div class="card-body">
+                        <h5 class="card-title">Total R</h5>
+                        <h3 id="totalR">0R</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Navigation des onglets -->
+        <ul class="nav nav-tabs mb-4" id="analyticsTabs" role="tablist" style="display: none;">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="overview-tab" data-bs-toggle="tab" data-bs-target="#overview"
+                    type="button" role="tab">Overview</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="daily-tab" data-bs-toggle="tab" data-bs-target="#daily" type="button"
+                    role="tab">Daily Performance</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="monthly-tab" data-bs-toggle="tab" data-bs-target="#monthly" type="button"
+                    role="tab">Monthly Performance</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="weekly-tab" data-bs-toggle="tab" data-bs-target="#weekly" type="button"
+                    role="tab">Weekly Performance</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="yearly-tab" data-bs-toggle="tab" data-bs-target="#yearly" type="button"
+                    role="tab">Yearly Performance</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="exposure-tab" data-bs-toggle="tab" data-bs-target="#exposure" type="button"
+                    role="tab">Asset Exposure</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="trades-tab" data-bs-toggle="tab" data-bs-target="#trades" type="button"
+                    role="tab">Trade History</button>
+            </li>
+        </ul>
+
+        <!-- Contenu des onglets -->
+        <div class="tab-content" id="analyticsContent">
+            <!-- Vue d'ensemble -->
+            <div class="tab-pane fade show active" id="overview" role="tabpanel">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5>Performance Metrics</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-6">
+                                        <strong>Average Win:</strong><br>
+                                        <span id="avgWin">0</span>
+                                    </div>
+                                    <div class="col-6">
+                                        <strong>Average Loss:</strong><br>
+                                        <span id="avgLoss">0</span>
+                                    </div>
+                                </div>
+                                <hr>
+                                <div class="row">
+                                    <div class="col-6">
+                                        <strong>Max Drawdown:</strong><br>
+                                        <span id="maxDrawdown">0</span>
+                                    </div>
+                                    <div class="col-6">
+                                        <strong>Sharpe Ratio:</strong><br>
+                                        <span id="sharpeRatio">0</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5>Capital Evolution</h5>
+                            </div>
+                            <div class="card-body">
+                                <canvas id="pnlChart" width="400" height="200"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Performance Quotidienne -->
+            <div class="tab-pane fade" id="daily" role="tabpanel">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>Performance by Day</h5>
+                    </div>
+                    <div class="card-body">
+                        <table class="table table-striped table-hover">
+                            <thead class="table-dark" id="theadDailyStats">
+                                <tr>
+                                    <th class="th-sortable sort-active sort-desc" data-sort-col="date"
+                                        onclick="toggleDailyDateSort()" title="Trier par date">Date <span
+                                            class="sort-indicator" aria-hidden="true"></span></th>
+                                    <th>Trades</th>
+                                    <th>P&L</th>
+                                    <th>RR</th>
+                                    <th>Capital %</th>
+                                    <th>Win Rate</th>
+                                    <th>Max Drawdown %</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="dailyTable">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Performance Mensuelle -->
+            <div class="tab-pane fade" id="monthly" role="tabpanel">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>Performance by Month</h5>
+                    </div>
+                    <div class="card-body">
+                        <table class="table table-striped table-hover">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>Mois</th>
+                                    <th>Trades</th>
+                                    <th>P&L</th>
+                                    <th>RR</th>
+                                    <th>Capital %</th>
+                                    <th>Win Rate</th>
+                                    <th>Max Drawdown %</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="monthlyTable">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Performance Hebdomadaire -->
+            <div class="tab-pane fade" id="weekly" role="tabpanel">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>Performance by Week</h5>
+                    </div>
+                    <div class="card-body">
+                        <table class="table table-striped table-hover">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>Week</th>
+                                    <th>Trades</th>
+                                    <th>P&L</th>
+                                    <th>RR</th>
+                                    <th>Capital %</th>
+                                    <th>Win Rate</th>
+                                    <th>Max Drawdown %</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="weeklyTable">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Performance Annuelle -->
+            <div class="tab-pane fade" id="yearly" role="tabpanel">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>Performance by Year</h5>
+                    </div>
+                    <div class="card-body">
+                        <table class="table table-striped table-hover">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>Year</th>
+                                    <th>Trades</th>
+                                    <th>P&L</th>
+                                    <th>RR</th>
+                                    <th>Capital %</th>
+                                    <th>Win Rate</th>
+                                    <th>Max Drawdown %</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="yearlyTable">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Exposition par Actif -->
+            <div class="tab-pane fade" id="exposure" role="tabpanel">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5>Asset Exposure</h5>
+                        <div>
+                            <select id="exposureTimeframeSelect" class="form-select form-select-sm"
+                                style="width: 180px; display: inline-block;"
+                                onchange="updateAssetExposureView(currentAssetAnalytics)">
+                                <option value="symbol">Global</option>
+                                <option value="daily">Daily</option>
+                                <option value="weekly">Weekly</option>
+                                <option value="monthly">Monthly</option>
+                                <option value="yearly">Yearly</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-5 mb-4">
+                                <div class="card border-secondary">
+                                    <div class="card-header">
+                                        <h6>Performance Chart</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <canvas id="assetExposureChart" width="400" height="260"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-7">
+                                <div class="card border-secondary">
+                                    <div class="card-header">
+                                        <h6>Asset Exposure</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <table class="table table-striped table-hover">
+                                            <thead class="table-dark" id="theadAssetExposure">
+                                                <tr>
+                                                    <th>Period</th>
+                                                    <th class="th-sortable sort-active sort-asc" data-sort-col="symbol"
+                                                        onclick="toggleAssetExposureSort()" title="Trier par actif">
+                                                        Asset<span class="sort-indicator" aria-hidden="true"></span>
+                                                    </th>
+                                                    <th>Trades</th>
+                                                    <th>P&L</th>
+                                                    <th>Win Rate</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="assetExposureTable"></tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Historique des Trades -->
+            <div class="tab-pane fade" id="trades" role="tabpanel">
+                <table class="table table-striped table-hover">
+                    <thead class="table-dark" id="theadTradesHistory">
+                        <tr>
+                            <th class="th-sortable" data-sort-col="symbol" onclick="toggleTradesSort('symbol')"
+                                title="Trier par symbole">Symbol <span class="sort-indicator"
+                                    aria-hidden="true"></span></th>
+                            <th>Type</th>
+                            <th class="th-sortable sort-active sort-desc" data-sort-col="trade_date"
+                                onclick="toggleTradesSort('trade_date')" title="Trier par date d'entrée">Entry Date <span
+                                    class="sort-indicator" aria-hidden="true"></span></th>
+                            <th>Entry Price</th>
+                            <th>Stop Loss</th>
+                            <th>Take Profit</th>
+                            <th>Exit Price</th>
+                            <th>P&L</th>
+                            <th>RR Initial</th>
+                            <th>RR</th>
+                            <th>% Gain/Loss</th>
+                            <th>Session</th>
+                            <th>Note & Attachment</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tradesTable">
+                        <!-- Les trades seront ajoutés ici dynamiquement -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="commentModal" tabindex="-1" aria-labelledby="commentModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="commentModalLabel">Note & images</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="tradeComment" class="form-label">Comment</label>
+                        <textarea id="tradeComment" class="form-control" rows="4"
+                            placeholder="Write your note here..."></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="tradeImageFile" class="form-label">Add screenshots (one or many)</label>
+                        <input type="file" id="tradeImageFile" class="form-control" accept="image/*" multiple>
+                    </div>
+                    <div id="imagePreview" class="mb-3"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-danger" onclick="deleteCommentData()">Delete</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" onclick="saveCommentAndImage()">Save</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="fullscreenImageModal" tabindex="-1" aria-labelledby="fullscreenImageModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog modal-fullscreen">
+            <div class="modal-content bg-dark">
+                <div class="modal-header bg-dark text-white">
+                    <h5 class="modal-title" id="fullscreenImageModalLabel">Preview</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                        aria-label="Close"></button>
+                </div>
+                <div class="modal-body d-flex align-items-center justify-content-center bg-dark"
+                    style="min-height: 80vh;">
+                    <img id="fullscreenImage" src="" style="max-width: 100%; max-height: 100%; object-fit: contain;"
+                        alt="Fullscreen preview">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="myModal">
+        <div class="modal-dialog">
+
+            <div class="modal-content bg-dark">
+                <form id="editTradeForm" action="dbusers.php" class="form-control trade-form" method="post">
+                    <!-- Modal Header -->
+                    <div class="modal-header">
+                        <h4 class="modal-title" id="editTradeModalTitle">Edit Trade</h4>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+
+                    <!-- Modal body -->
+                    <div class="modal-body">
+                        <input id="account_name" name="account_name" type="hidden">
+                        <input id="edit_trade_id" name="trade_id" type="hidden">
+                        <div class="mb-3 mt-3">
+                            <label for="date" class="form-label">Date:</label>
+                            <input type="date" class="form-control" id="trade_date" name="trade_date">
+                        </div>
+                        <div class="mb-3 mt-3">
+                            <label for="text" class="form-label">Symbol:</label>
+                            <select class="form-select" id="edit_symbol" name="symbol">
+                                <option>EURUSD</option>
+                                <option>GBPUSD</option>
+                                <option>USDJPY</option>
+                                <option>USDCAD</option>
+                                <option>AUDUSD</option>
+                                <option>AUDJPY</option>
+                                <option>AUDNZD</option>
+                                <option>AUDCHF</option>
+                                <option>EURAUD</option>
+                                <option>GBPAUD</option>
+                                <option>NZDCHF</option>
+                                <option>NZDUSD</option>
+                                <option>NZDJPY</option>
+                                <option>GBPNZD</option>
+                                <option>EURNZD</option>
+                                <option>EURJPY</option>
+                                <option>CHFJPY</option>
+                                <option>EURGBP</option>
+                                <option>GBPCAD</option>
+                                <option>CADJPY</option>
+                                <option>CADCHF</option>
+                                <option>EURCAD</option>
+                                <option>AUDCAD</option>
+                                <option>NZDCAD</option>
+                                <option>NZDJPY</option>
+                            </select>
+                        </div>
+                        <div class="mb-3 mt-3">
+                            <label for="text" class="form-label">Type:</label>
+                            <select class="form-select" id="edit_type" name="type">
+                                <option>BUY</option>
+                                <option>SELL</option>
+                            </select>
+                        </div>
+                        <div class="mb-3 mt-3">
+                            <label for="text" class="form-label">Session:</label>
+                            <select class="form-select" id="edit_session" name="session">
+                                <option>Asian</option>
+                                <option>London</option>
+                                <option>New York</option>
+                            </select>
+                        </div>
+                        <div class="mb-3 mt-3">
+                            <label for="text" class="form-label">Entry Price:</label>
+                            <input type="text" class="form-control" id="edit_entry_price" name="entry_price"
+                                placeholder="Enter amount">
+                        </div>
+                        <div class="mb-3 mt-3">
+                            <label for="text" class="form-label">Stop Loss:</label>
+                            <input type="text" class="form-control" id="edit_stop_loss" name="stop_loss"
+                                placeholder="Enter amount">
+                        </div>
+                        <div class="mb-3 mt-3">
+                            <label for="text" class="form-label">Take Profit:</label>
+                            <input type="text" class="form-control" id="edit_take_profit" name="take_profit"
+                                placeholder="Enter amount">
+                        </div>
+                        <div class="mb-3 mt-3">
+                            <label for="text" class="form-label">Exit Price:</label>
+                            <input type="text" class="form-control" id="edit_exit_price" name="exit_price"
+                                placeholder="Enter amount">
+                        </div>
+                        <div class="mb-3 mt-3">
+                            <label for="text" class="form-label">P&L:</label>
+                            <input type="text" class="form-control" id="edit_pnl" name="pnl" placeholder="Enter amount">
+                        </div>
+                        <button type="submit" class="btn btn-primary" name="savechanges">Save</button>
+
+                    </div>
+
+                    <!-- Modal footer -->
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Close</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+</body>
+<script>
+    applySavedTheme();
+    updateThemeToggleText();
+    let userconnected = "";
+    let currentAccountName = "";
+    let tradesCache = [];
+    let currentAnalytics = null;
+    let pnlChart = null;
+
+    let dailyStatsCache = [];
+    let dailyStatsMeta = { drawdownByDay: {}, rrByDay: {}, capitalPctByDay: {} };
+    let dailyDateSort = { direction: 'desc' };
+
+    let tradesTableSource = [];
+    let tradesSort = { column: 'trade_date', direction: 'desc' };
+
+    let assetExposureRowsStore = [];
+    let assetExposureSort = { column: 'symbol', direction: 'asc' };
+
+    function syncThSortableClasses(theadEl, activeCol, direction) {
+        if (!theadEl) return;
+        theadEl.querySelectorAll('th.th-sortable').forEach(th => {
+            th.classList.remove('sort-active', 'sort-asc', 'sort-desc');
+            if (activeCol && th.dataset.sortCol === activeCol) {
+                th.classList.add('sort-active', direction === 'asc' ? 'sort-asc' : 'sort-desc');
+            }
+        });
+    }
+
+    function toggleDailyDateSort() {
+        dailyDateSort.direction = dailyDateSort.direction === 'asc' ? 'desc' : 'asc';
+        renderDailyStatsTable();
+    }
+
+    function renderDailyStatsTable() {
+        const tableBody = document.getElementById("dailyTable");
+        if (!tableBody) return;
+        const { drawdownByDay, rrByDay, capitalPctByDay } = dailyStatsMeta;
+        const mul = dailyDateSort.direction === 'asc' ? 1 : -1;
+        const sorted = dailyStatsCache.slice().sort((a, b) => {
+            const da = new Date(a.date).getTime();
+            const db = new Date(b.date).getTime();
+            const va = Number.isNaN(da) ? 0 : da;
+            const vb = Number.isNaN(db) ? 0 : db;
+            return (va - vb) * mul;
+        });
+        syncThSortableClasses(document.getElementById("theadDailyStats"), 'date', dailyDateSort.direction);
+        tableBody.innerHTML = "";
+        sorted.forEach(day => {
+            let statusClass = day.pnl >= 0 ? 'text-success' : 'text-danger';
+            let statusIcon = day.pnl >= 0 ? '📈' : '📉';
+
+            let row = `<tr>
+                <td>${formatDate(day.date)}</td>
+                <td>${day.trades}</td>
+                <td class="${statusClass}"><strong>${formatNumber(day.pnl)}</strong></td>
+                <td>${getRRValue(day, rrByDay[String(day.date).slice(0, 10)])}</td>
+                <td>${getCapitalPercentValue(day, capitalPctByDay[String(day.date).slice(0, 10)])}</td>
+                <td>${day.win_rate}%</td>
+                <td>${getDrawdownPercent(day, drawdownByDay[String(day.date).slice(0, 10)])}</td>
+                <td class="status-label ${statusClass}">${statusIcon} ${day.pnl >= 0 ? 'Profit' : 'Loss'}</td>
+            </tr>`;
+            tableBody.innerHTML += row;
+        });
+    }
+
+    function toggleTradesSort(column) {
+        if (tradesSort.column === column) {
+            tradesSort.direction = tradesSort.direction === 'asc' ? 'desc' : 'asc';
+        } else {
+            tradesSort.column = column;
+            tradesSort.direction = column === 'symbol' ? 'asc' : 'desc';
+        }
+        displayTrades();
+    }
+
+    function compareTradesForSort(a, b) {
+        const mul = tradesSort.direction === 'asc' ? 1 : -1;
+        if (tradesSort.column === 'symbol') {
+            const cmp = String(a.symbol || '').localeCompare(String(b.symbol || ''), undefined, { sensitivity: 'base' });
+            if (cmp !== 0) return cmp * mul;
+            const ta = new Date(a.trade_date).getTime();
+            const tb = new Date(b.trade_date).getTime();
+            const va = Number.isNaN(ta) ? 0 : ta;
+            const vb = Number.isNaN(tb) ? 0 : tb;
+            if (va !== vb) return (va - vb) * mul;
+            const ida = parseInt(a.id, 10) || 0;
+            const idb = parseInt(b.id, 10) || 0;
+            return (ida - idb) * mul;
+        }
+        const ta = new Date(a.trade_date).getTime();
+        const tb = new Date(b.trade_date).getTime();
+        const va = Number.isNaN(ta) ? 0 : ta;
+        const vb = Number.isNaN(tb) ? 0 : tb;
+        if (va !== vb) return (va - vb) * mul;
+        const ida = parseInt(a.id, 10) || 0;
+        const idb = parseInt(b.id, 10) || 0;
+        if (ida !== idb) return (ida - idb) * mul;
+        return String(a.symbol || '').localeCompare(String(b.symbol || ''), undefined, { sensitivity: 'base' }) * mul;
+    }
+
+    function toggleAssetExposureSort() {
+        assetExposureSort.direction = assetExposureSort.direction === 'asc' ? 'desc' : 'asc';
+        renderAssetExposureTable();
+    }
+
+    function renderAssetExposureTable() {
+        const tableBody = document.getElementById('assetExposureTable');
+        if (!tableBody) return;
+        const mul = assetExposureSort.direction === 'asc' ? 1 : -1;
+        const sorted = assetExposureRowsStore.slice().sort((a, b) => {
+            const cmp = String(a.symbol || '').localeCompare(String(b.symbol || ''), undefined, { sensitivity: 'base' });
+            return cmp * mul;
+        });
+        syncThSortableClasses(document.getElementById("theadAssetExposure"), 'symbol', assetExposureSort.direction);
+        tableBody.innerHTML = '';
+        sorted.forEach(item => {
+            let statusClass = item.pnl >= 0 ? 'text-success' : 'text-danger';
+            let statusIcon = item.pnl >= 0 ? '📈' : '📉';
+            let periodLabel = item.period || 'Global';
+
+            let row = `<tr>
+                <td>${periodLabel}</td>
+                <td>${item.symbol}</td>
+                <td>${item.trades}</td>
+                <td class="${statusClass}"><strong>${formatNumber(item.pnl)}</strong></td>
+                <td>${item.win_rate}%</td>
+            </tr>`;
+            tableBody.innerHTML += row;
+        });
+    }
+
+    function Load() {
+        if (window.localStorage.getItem("userConnected")) {
+            userconnected = window.localStorage.getItem("userConnected");
+            console.log(userconnected);
+            getData();
+            getAccounts();
+        }
+    }
+
+    function applySavedTheme() {
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme === 'light' || savedTheme === 'dark') {
+            document.documentElement.setAttribute('data-theme', savedTheme);
+            return;
+        }
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        document.documentElement.setAttribute('data-theme', prefersDark ? 'dark' : 'light');
+    }
+
+    function toggleTheme() {
+        const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
+        const nextTheme = currentTheme === 'dark' ? 'light' : 'dark';
+        document.documentElement.setAttribute('data-theme', nextTheme);
+        localStorage.setItem('theme', nextTheme);
+        updateThemeToggleText();
+        refreshAnalyticsThemeVisuals();
+    }
+
+    function updateThemeToggleText() {
+        const btn = document.getElementById('themeToggleBtn');
+        if (!btn) return;
+        const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
+        const nextLabel = currentTheme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode';
+        btn.setAttribute('aria-label', nextLabel);
+        btn.setAttribute('title', nextLabel);
+    }
+
+    function refreshAnalyticsThemeVisuals() {
+        if (pnlChart) {
+            const vars = getComputedStyle(document.documentElement);
+            const textColor = vars.getPropertyValue('--text').trim();
+            const borderColor = vars.getPropertyValue('--border').trim();
+            pnlChart.options.plugins.title.color = textColor;
+            if (pnlChart.options.scales?.y?.ticks) {
+                pnlChart.options.scales.y.ticks.color = textColor;
+            }
+            if (pnlChart.options.scales?.x?.ticks) {
+                pnlChart.options.scales.x.ticks.color = textColor;
+            }
+            if (pnlChart.options.scales?.y?.grid) {
+                pnlChart.options.scales.y.grid.color = borderColor;
+            }
+            if (pnlChart.options.scales?.x?.grid) {
+                pnlChart.options.scales.x.grid.color = borderColor;
+            }
+            pnlChart.update();
+        }
+        if (assetExposureChart) {
+            const vars = getComputedStyle(document.documentElement);
+            const textColor = vars.getPropertyValue('--text').trim();
+            const borderColor = vars.getPropertyValue('--border').trim();
+            if (assetExposureChart.options.plugins?.title) {
+                assetExposureChart.options.plugins.title.color = textColor;
+            }
+            if (assetExposureChart.options.scales?.y?.ticks) {
+                assetExposureChart.options.scales.y.ticks.color = textColor;
+            }
+            if (assetExposureChart.options.scales?.x?.ticks) {
+                assetExposureChart.options.scales.x.ticks.color = textColor;
+            }
+            if (assetExposureChart.options.scales?.y?.grid) {
+                assetExposureChart.options.scales.y.grid.color = borderColor;
+            }
+            if (assetExposureChart.options.scales?.x?.grid) {
+                assetExposureChart.options.scales.x.grid.color = borderColor;
+            }
+            assetExposureChart.update();
+        }
+        const currentWinRate = parseFloat((document.getElementById("winRate")?.innerText || "0").replace("%", "")) || 0;
+        updateWinRateDonut(currentWinRate);
+    }
+
+    async function getData() {
+        try {
+            let resultat = await fetch(`http://localhost/www/Tracking-journal/account.php?account=${encodeURIComponent(userconnected)}`);
+            let datas = await resultat.json();
+            console.log(datas);
+            document.getElementById("accounts").innerHTML = `
+                <li><a class="dropdown-item" href="addaccount.html">Add</a></li>
+                <li><hr class="dropdown-divider"></li>`;
+            datas.forEach(element => {
+                document.getElementById("accounts").innerHTML += `<li><a class="dropdown-item" href="#" onclick="loadAnalytics('${element.account_name}')">${element.account_name}</a></li>`;
+            });
+        } catch (error) {
+            alert(error);
+        }
+    }
+
+    async function getAccounts() {
+        try {
+            let resultat = await fetch(`http://localhost/www/Tracking-journal/account.php?account=${encodeURIComponent(userconnected)}`);
+            let datas = await resultat.json();
+            console.log(datas);
+            document.getElementById("accounts").innerHTML = `
+                <li><a class="dropdown-item" href="addaccount.html">Add</a></li>
+                <li><hr class="dropdown-divider"></li>`;
+            datas.forEach(element => {
+                document.getElementById("accounts").innerHTML += `<li><a class="dropdown-item" href="#" onclick="loadAnalytics('${element.account_name}')">${element.account_name}</a></li>`;
+            });
+        } catch (error) {
+            console.error(error);
+        }
+    }
+
+    async function loadAnalytics(accountName) {
+        try {
+            document.getElementById("analyticsTitle").innerText = `Account analytics: ${accountName}`;
+
+            currentAccountName = accountName;
+
+            // Charger les analyses
+            let analyticsResult = await fetch(`http://localhost/www/Tracking-journal/trades.php?analytics=${encodeURIComponent(accountName)}`);
+            let analyticsResponse = await analyticsResult.text();
+
+            let currentAnalytics;
+            try {
+                currentAnalytics = JSON.parse(analyticsResponse);
+            } catch (jsonError) {
+                console.error('JSON Parse Error:', analyticsResponse);
+                alert(`Error while loading analytics for ${accountName}: ${analyticsResponse}`);
+                return;
+            }
+
+            if (currentAnalytics.error) {
+                alert(`Error: ${currentAnalytics.error}`);
+                return;
+            }
+
+            // Charger les trades pour l'onglet historique
+            let tradesResult = await fetch(`http://localhost/www/Tracking-journal/trades.php?trades=${encodeURIComponent(accountName)}`);
+            let tradesResponse = await tradesResult.text();
+
+            let trades;
+            try {
+                trades = JSON.parse(tradesResponse);
+            } catch (jsonError) {
+                console.error('JSON Parse Error for trades:', tradesResponse);
+                alert(`Error while loading trades for ${accountName}: ${tradesResponse}`);
+                return;
+            }
+
+            if (trades.error) {
+                alert(`Error: ${trades.error}`);
+                return;
+            }
+
+            const initialBalance = await getInitialBalance(accountName);
+            const drawdownData = calculateDrawdownData(trades, initialBalance);
+
+            dailyDateSort = { direction: 'desc' };
+            tradesSort = { column: 'trade_date', direction: 'desc' };
+            assetExposureSort = { column: 'symbol', direction: 'asc' };
+
+            // Afficher les statistiques globales
+            displayGlobalStats(currentAnalytics.overall, trades, drawdownData.overallMaxDrawdown);
+
+            // Afficher les performances par période
+            displayDailyStats(currentAnalytics.daily, drawdownData.byDay, drawdownData.rrByDay, drawdownData.capitalPctByDay);
+            displayMonthlyStats(currentAnalytics.monthly, drawdownData.byMonth, drawdownData.rrByMonth, drawdownData.capitalPctByMonth);
+            displayWeeklyStats(currentAnalytics.weekly, drawdownData.byWeek, drawdownData.rrByWeek, drawdownData.capitalPctByWeek);
+            displayYearlyStats(currentAnalytics.yearly, drawdownData.byYear, drawdownData.rrByYear, drawdownData.capitalPctByYear);
+
+            // Afficher l'exposition par actif
+            currentAssetAnalytics = currentAnalytics;
+            updateAssetExposureView(currentAssetAnalytics);
+
+            tradesCache = Array.isArray(trades) ? trades.filter(trade => trade.id) : [];
+
+            // Afficher l'historique des trades
+            displayTrades(trades);
+
+            // Créer le graphique P&L
+            createPnLChart(trades);
+
+            // Afficher l'interface
+            document.getElementById("globalStats").style.display = "flex";
+            document.getElementById("analyticsTabs").style.display = "flex";
+
+        } catch (error) {
+            console.error('Network Error:', error);
+            alert(`Network error while loading analytics: ${error.message}`);
+        }
+    }
+
+    async function getInitialBalance(accountName) {
+        try {
+            const response = await fetch(`http://localhost/www/Tracking-journal/account.php?account=${encodeURIComponent(userconnected)}`);
+            const accounts = await response.json();
+            const account = Array.isArray(accounts) ? accounts.find(a => a.account_name === accountName) : null;
+            return parseFloat(account?.initial_balance) || 0;
+        } catch (error) {
+            return 0;
+        }
+    }
+
+    function calculateDrawdownData(trades, initialBalance) {
+        let runningEquity = initialBalance;
+        let peakEquity = initialBalance;
+        let overallMaxDrawdown = 0;
+        const byDay = {};
+        const byMonth = {};
+        const byWeek = {};
+        const byYear = {};
+        const rrByDay = {};
+        const rrByMonth = {};
+        const rrByWeek = {};
+        const rrByYear = {};
+        const capitalPctByDay = {};
+        const capitalPctByMonth = {};
+        const capitalPctByWeek = {};
+        const capitalPctByYear = {};
+        const yearStartEquity = {};
+        const yearPnl = {};
+
+        const validTrades = trades
+            .filter(trade => trade.symbol !== 'TOTAL' && trade.trade_date)
+            .slice()
+            .sort((a, b) => new Date(a.trade_date) - new Date(b.trade_date));
+
+        validTrades.forEach(trade => {
+            const pnl = parseFloat(trade.pnl) || 0;
+            const preTradeEquity = runningEquity;
+            runningEquity += pnl;
+            if (runningEquity > peakEquity) {
+                peakEquity = runningEquity;
+            }
+
+            const currentDrawdown = peakEquity > 0 ? ((peakEquity - runningEquity) / peakEquity) * 100 : 0;
+            overallMaxDrawdown = Math.max(overallMaxDrawdown, currentDrawdown);
+
+            const dateObj = new Date(trade.trade_date);
+            const dayKey = String(trade.trade_date).slice(0, 10);
+            const monthKey = `${dateObj.getFullYear()}-${String(dateObj.getMonth() + 1).padStart(2, '0')}`;
+            const yearKey = String(dateObj.getFullYear());
+            const weekKey = getISOWeekKey(dateObj);
+            const weekNoOnly = weekKey.split('-W')[1];
+            const compactWeekKey = weekKey.replace('-W', '');
+            const slashWeekKey = weekKey.replace('-W', '/W');
+            const rrValue = parseFloat(trade.rr) || 0;
+            const capitalPct = initialBalance > 0 ? ((runningEquity - initialBalance) / initialBalance) * 100 : 0;
+
+            if (yearStartEquity[yearKey] === undefined) {
+                yearStartEquity[yearKey] = preTradeEquity;
+            }
+            yearPnl[yearKey] = (yearPnl[yearKey] || 0) + pnl;
+            const yearlyBase = yearStartEquity[yearKey];
+            const yearlyCapitalPct = yearlyBase !== 0 ? (yearPnl[yearKey] / yearlyBase) * 100 : 0;
+
+            byDay[dayKey] = Math.max(byDay[dayKey] || 0, currentDrawdown);
+            byMonth[monthKey] = Math.max(byMonth[monthKey] || 0, currentDrawdown);
+            byYear[yearKey] = Math.max(byYear[yearKey] || 0, currentDrawdown);
+            byWeek[weekKey] = Math.max(byWeek[weekKey] || 0, currentDrawdown);
+            byWeek[compactWeekKey] = Math.max(byWeek[compactWeekKey] || 0, currentDrawdown);
+            byWeek[slashWeekKey] = Math.max(byWeek[slashWeekKey] || 0, currentDrawdown);
+            byWeek[`${dateObj.getFullYear()}-${weekNoOnly}`] = Math.max(byWeek[`${dateObj.getFullYear()}-${weekNoOnly}`] || 0, currentDrawdown);
+            byWeek[`${dateObj.getFullYear()} week ${parseInt(weekNoOnly, 10)}`] = Math.max(byWeek[`${dateObj.getFullYear()} week ${parseInt(weekNoOnly, 10)}`] || 0, currentDrawdown);
+            byWeek[weekNoOnly] = Math.max(byWeek[weekNoOnly] || 0, currentDrawdown);
+
+            rrByDay[dayKey] = (rrByDay[dayKey] || 0) + rrValue;
+            rrByMonth[monthKey] = (rrByMonth[monthKey] || 0) + rrValue;
+            rrByYear[yearKey] = (rrByYear[yearKey] || 0) + rrValue;
+            rrByWeek[weekKey] = (rrByWeek[weekKey] || 0) + rrValue;
+            rrByWeek[compactWeekKey] = (rrByWeek[compactWeekKey] || 0) + rrValue;
+            rrByWeek[slashWeekKey] = (rrByWeek[slashWeekKey] || 0) + rrValue;
+            rrByWeek[`${dateObj.getFullYear()}-${weekNoOnly}`] = (rrByWeek[`${dateObj.getFullYear()}-${weekNoOnly}`] || 0) + rrValue;
+            rrByWeek[`${dateObj.getFullYear()} week ${parseInt(weekNoOnly, 10)}`] = (rrByWeek[`${dateObj.getFullYear()} week ${parseInt(weekNoOnly, 10)}`] || 0) + rrValue;
+            rrByWeek[weekNoOnly] = (rrByWeek[weekNoOnly] || 0) + rrValue;
+
+            capitalPctByDay[dayKey] = capitalPct;
+            capitalPctByMonth[monthKey] = capitalPct;
+            capitalPctByYear[yearKey] = yearlyCapitalPct;
+            capitalPctByWeek[weekKey] = capitalPct;
+            capitalPctByWeek[compactWeekKey] = capitalPct;
+            capitalPctByWeek[slashWeekKey] = capitalPct;
+            capitalPctByWeek[`${dateObj.getFullYear()}-${weekNoOnly}`] = capitalPct;
+            capitalPctByWeek[`${dateObj.getFullYear()} week ${parseInt(weekNoOnly, 10)}`] = capitalPct;
+            capitalPctByWeek[weekNoOnly] = capitalPct;
+        });
+
+        return { overallMaxDrawdown, byDay, byMonth, byWeek, byYear, rrByDay, rrByMonth, rrByWeek, rrByYear, capitalPctByDay, capitalPctByMonth, capitalPctByWeek, capitalPctByYear };
+    }
+
+    function getISOWeekKey(dateObj) {
+        const date = new Date(Date.UTC(dateObj.getFullYear(), dateObj.getMonth(), dateObj.getDate()));
+        const dayNum = date.getUTCDay() || 7;
+        date.setUTCDate(date.getUTCDate() + 4 - dayNum);
+        const yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
+        const weekNo = Math.ceil((((date - yearStart) / 86400000) + 1) / 7);
+        return `${date.getUTCFullYear()}-W${String(weekNo).padStart(2, '0')}`;
+    }
+
+    function normalizeWeekKey(weekLabel) {
+        const text = String(weekLabel || '');
+        const yearMatch = text.match(/(20\d{2})/);
+        const weekMatch = text.match(/W?\s*(\d{1,2})/i);
+        if (!yearMatch || !weekMatch) {
+            return text;
+        }
+        return `${yearMatch[1]}-W${String(parseInt(weekMatch[1], 10)).padStart(2, '0')}`;
+    }
+
+    function resolveWeeklyDrawdownValue(week, drawdownByWeek = {}) {
+        const rawWeek = String(week?.week || '').trim();
+        const normalized = normalizeWeekKey(rawWeek);
+        const candidates = [
+            rawWeek,
+            normalized,
+            normalized.replace('-W', ''),
+            normalized.replace('-W', '/W'),
+            normalized.replace('-W', '-'),
+            normalized.split('-W')[1],
+            rawWeek.replace(/\s+/g, ' ').toLowerCase(),
+            normalized.toLowerCase()
+        ].filter(Boolean);
+
+        for (const key of candidates) {
+            if (Object.prototype.hasOwnProperty.call(drawdownByWeek, key)) {
+                return drawdownByWeek[key];
+            }
+        }
+        return null;
+    }
+
+    function resolveWeeklyRRValue(week, rrByWeek = {}) {
+        const rawWeek = String(week?.week || '').trim();
+        const normalized = normalizeWeekKey(rawWeek);
+        const candidates = [
+            rawWeek,
+            normalized,
+            normalized.replace('-W', ''),
+            normalized.replace('-W', '/W'),
+            normalized.replace('-W', '-'),
+            normalized.split('-W')[1],
+            rawWeek.replace(/\s+/g, ' ').toLowerCase(),
+            normalized.toLowerCase()
+        ].filter(Boolean);
+
+        for (const key of candidates) {
+            if (Object.prototype.hasOwnProperty.call(rrByWeek, key)) {
+                return rrByWeek[key];
+            }
+        }
+        return null;
+    }
+
+    function resolveWeeklyCapitalPctValue(week, capitalPctByWeek = {}) {
+        const rawWeek = String(week?.week || '').trim();
+        const normalized = normalizeWeekKey(rawWeek);
+        const candidates = [
+            rawWeek,
+            normalized,
+            normalized.replace('-W', ''),
+            normalized.replace('-W', '/W'),
+            normalized.replace('-W', '-'),
+            normalized.split('-W')[1],
+            rawWeek.replace(/\s+/g, ' ').toLowerCase(),
+            normalized.toLowerCase()
+        ].filter(Boolean);
+
+        for (const key of candidates) {
+            if (Object.prototype.hasOwnProperty.call(capitalPctByWeek, key)) {
+                return capitalPctByWeek[key];
+            }
+        }
+        return null;
+    }
+
+    function getRRValue(row, computedValue = null) {
+        if (computedValue !== null && computedValue !== undefined && computedValue !== '') {
+            return `${formatNumber(computedValue)}R`;
+        }
+        const rawRR = row?.rr ?? row?.total_rr ?? row?.r ?? row?.total_r;
+        if (rawRR === null || rawRR === undefined || rawRR === '') {
+            return "-";
+        }
+        return `${formatNumber(rawRR)}R`;
+    }
+
+    function getCapitalPercentValue(row, computedValue = null) {
+        if (computedValue !== null && computedValue !== undefined && computedValue !== '') {
+            return `${formatNumber(computedValue)}%`;
+        }
+        const rawCapitalPct = row?.capital_pct ?? row?.capitalPercent ?? row?.equity_pct ?? row?.pct;
+        if (rawCapitalPct === null || rawCapitalPct === undefined || rawCapitalPct === '') {
+            return "-";
+        }
+        return `${formatNumber(rawCapitalPct)}%`;
+    }
+
+    function displayGlobalStats(overall, trades = [], computedMaxDrawdown = null) {
+        document.getElementById("totalTrades").innerText = overall.total_trades;
+        document.getElementById("winRate").innerText = overall.win_rate + "%";
+        const totalPnLEl = document.getElementById("totalPnL");
+        const totalPnlValue = parseFloat(overall.total_pnl);
+        totalPnLEl.innerText = formatNumber(overall.total_pnl);
+        totalPnLEl.classList.remove("total-pnl-positive", "total-pnl-negative", "text-success", "text-danger");
+        totalPnLEl.classList.add(!Number.isNaN(totalPnlValue) && totalPnlValue >= 0 ? "total-pnl-positive" : "total-pnl-negative");
+        document.getElementById("profitFactor").innerText = overall.profit_factor;
+        document.getElementById("avgWin").innerText = formatNumber(overall.avg_win);
+        document.getElementById("avgLoss").innerText = formatNumber(overall.avg_loss);
+        const maxDrawdownValue = computedMaxDrawdown ?? parseFloat(overall.max_drawdown) ?? 0;
+        document.getElementById("maxDrawdown").innerText = formatNumber(maxDrawdownValue) + "%";
+        document.getElementById("sharpeRatio").innerText = overall.sharpe_ratio;
+        const totalRValue = trades
+            .filter(trade => trade.symbol !== 'TOTAL')
+            .reduce((sum, trade) => sum + (parseFloat(trade.rr) || 0), 0);
+        const totalREl = document.getElementById("totalR");
+        totalREl.innerText = `${formatNumber(totalRValue)}R`;
+        totalREl.classList.remove("total-r-positive", "total-r-negative", "text-success", "text-danger");
+        totalREl.classList.add(totalRValue >= 0 ? "total-r-positive" : "total-r-negative");
+        updateWinRateDonut(parseFloat(overall.win_rate) || 0);
+    }
+
+    function updateWinRateDonut(winRateValue) {
+        const donut = document.getElementById("winRateDonut");
+        if (!donut) return;
+        const clamped = Math.max(0, Math.min(100, winRateValue));
+        const degrees = (clamped / 100) * 360;
+        const cssVars = getComputedStyle(document.documentElement);
+        const positiveColor = cssVars.getPropertyValue('--positive-color').trim();
+        const negativeColor = cssVars.getPropertyValue('--negative-color').trim();
+        donut.style.background = `conic-gradient(${positiveColor} 0deg ${degrees}deg, ${negativeColor} ${degrees}deg 360deg)`;
+        donut.title = `Winners: ${clamped.toFixed(1)}% | Losers: ${(100 - clamped).toFixed(1)}%`;
+    }
+
+    function displayDailyStats(dailyStats, drawdownByDay = {}, rrByDay = {}, capitalPctByDay = {}) {
+        dailyStatsCache = Array.isArray(dailyStats) ? dailyStats.slice() : [];
+        dailyStatsMeta = { drawdownByDay, rrByDay, capitalPctByDay };
+        renderDailyStatsTable();
+    }
+
+    function displayMonthlyStats(monthlyStats, drawdownByMonth = {}, rrByMonth = {}, capitalPctByMonth = {}) {
+        let tableBody = document.getElementById("monthlyTable");
+        tableBody.innerHTML = "";
+
+        monthlyStats.forEach(month => {
+            let statusClass = month.pnl >= 0 ? 'text-success' : 'text-danger';
+            let statusIcon = month.pnl >= 0 ? '📈' : '📉';
+            let monthName = new Date(month.month + '-01').toLocaleDateString('en-US', { year: 'numeric', month: 'long' });
+
+            let row = `<tr>
+                <td>${monthName}</td>
+                <td>${month.trades}</td>
+                <td class="${statusClass}"><strong>${formatNumber(month.pnl)}</strong></td>
+                <td>${getRRValue(month, rrByMonth[String(month.month)])}</td>
+                <td>${getCapitalPercentValue(month, capitalPctByMonth[String(month.month)])}</td>
+                <td>${month.win_rate}%</td>
+                <td>${getDrawdownPercent(month, drawdownByMonth[String(month.month)])}</td>
+                <td class="status-label ${statusClass}">${statusIcon} ${month.pnl >= 0 ? 'Profit' : 'Loss'}</td>
+            </tr>`;
+            tableBody.innerHTML += row;
+        });
+    }
+
+    function displayWeeklyStats(weeklyStats, drawdownByWeek = {}, rrByWeek = {}, capitalPctByWeek = {}) {
+        let tableBody = document.getElementById("weeklyTable");
+        tableBody.innerHTML = "";
+
+        weeklyStats.forEach(week => {
+            let statusClass = week.pnl >= 0 ? 'text-success' : 'text-danger';
+            let statusIcon = week.pnl >= 0 ? '📈' : '📉';
+
+            let row = `<tr>
+                <td>${week.week}</td>
+                <td>${week.trades}</td>
+                <td class="${statusClass}"><strong>${formatNumber(week.pnl)}</strong></td>
+                <td>${getRRValue(week, resolveWeeklyRRValue(week, rrByWeek))}</td>
+                <td>${getCapitalPercentValue(week, resolveWeeklyCapitalPctValue(week, capitalPctByWeek))}</td>
+                <td>${week.win_rate}%</td>
+                <td>${getDrawdownPercent(week, resolveWeeklyDrawdownValue(week, drawdownByWeek))}</td>
+                <td class="status-label ${statusClass}">${statusIcon} ${week.pnl >= 0 ? 'Profit' : 'Loss'}</td>
+            </tr>`;
+            tableBody.innerHTML += row;
+        });
+    }
+
+    function displayYearlyStats(yearlyStats, drawdownByYear = {}, rrByYear = {}, capitalPctByYear = {}) {
+        let tableBody = document.getElementById("yearlyTable");
+        tableBody.innerHTML = "";
+
+        yearlyStats.forEach(year => {
+            let statusClass = year.pnl >= 0 ? 'text-success' : 'text-danger';
+            let statusIcon = year.pnl >= 0 ? '📈' : '📉';
+
+            let row = `<tr>
+                <td>${year.year}</td>
+                <td>${year.trades}</td>
+                <td class="${statusClass}"><strong>${formatNumber(year.pnl)}</strong></td>
+                <td>${getRRValue(year, rrByYear[String(year.year)])}</td>
+                <td>${getCapitalPercentValue(year, capitalPctByYear[String(year.year)])}</td>
+                <td>${year.win_rate}%</td>
+                <td>${getDrawdownPercent(year, drawdownByYear[String(year.year)])}</td>
+                <td class="status-label ${statusClass}">${statusIcon} ${year.pnl >= 0 ? 'Profit' : 'Loss'}</td>
+            </tr>`;
+            tableBody.innerHTML += row;
+        });
+    }
+
+    function displayTrades(trades) {
+        if (Array.isArray(trades)) {
+            tradesTableSource = trades.slice();
+        }
+        const list = tradesTableSource;
+        let tableBody = document.getElementById("tradesTable");
+        if (!tableBody) return;
+        tableBody.innerHTML = "";
+
+        const nonTotal = list.filter(t => t.symbol !== 'TOTAL');
+        const totalRows = list.filter(t => t.symbol === 'TOTAL');
+        nonTotal.sort(compareTradesForSort);
+        const ordered = nonTotal.concat(totalRows);
+
+        syncThSortableClasses(document.getElementById("theadTradesHistory"), tradesSort.column, tradesSort.direction);
+
+        ordered.forEach((trade, index) => {
+            const tradeId = trade.id ? `trade-${trade.id}` : `trade-total-${index}`;
+            const commentData = getCommentData(tradeId);
+            const hasNote = hasNoteContent(commentData);
+            let rowClass = trade.symbol === 'TOTAL' ? 'table-warning font-weight-bold' : '';
+            const symbolCellAttrs = (trade.symbol !== 'TOTAL' && trade.id)
+                ? `onclick="viewTradeDetails(${trade.id})" data-bs-toggle="modal" data-bs-target="#myModal" style="cursor:pointer;"`
+                : '';
+
+            let noteCell = `
+                <button class="btn btn-icon-note p-0 border-0" data-trade-id="${tradeId}" data-trade-symbol="${trade.symbol}" title="Add a note">
+                    <span style="font-size: 1.5rem; color: ${hasNote ? '#28a745' : '#6c757d'};">
+                        ${hasNote ? '✓ 📝' : '📝'}
+                    </span>
+                </button>
+            `;
+
+            let deleteBtn = trade.symbol !== 'TOTAL' && trade.id ? `
+                <button class="btn btn-sm btn-outline-danger" onclick="deleteTradeConfirm(${trade.id})" title="Delete this trade">
+                    🗑️
+                </button>
+            ` : '';
+
+            const tradePnl = parseFloat(trade.pnl) || 0;
+            const tradePnlClass = tradePnl >= 0 ? 'text-success' : 'text-danger';
+            let row = `<tr class="${rowClass}">
+                <td ${symbolCellAttrs}>${trade.symbol}</td>
+                <td>${trade.type}</td>
+                <td>${trade.trade_date || ''}</td>
+                <td>${formatExactInputValue(trade.entry_price)}</td>
+                <td>${formatExactInputValue(trade.stop_loss)}</td>
+                <td>${formatExactInputValue(trade.take_profit)}</td>
+                <td>${formatExactInputValue(trade.exit_price)}</td>
+                <td class="${tradePnlClass}"><strong>${formatNumber(trade.pnl)}</strong></td>
+                <td>${trade.rr_initial !== undefined && trade.rr_initial !== null ? formatNumber(trade.rr_initial) : ''}</td>
+                <td>${formatNumber(trade.rr)}</td>
+                <td>${trade.pct !== null && trade.pct !== undefined ? formatNumber(trade.pct) + '%' : ''}</td>
+                <td>${trade.session || ''}</td>
+                <td>
+                    <div style="display: flex; gap: 6px; align-items: center;">
+                        ${noteCell}
+                        ${deleteBtn}
+                    </div>
+                </td>
+            </tr>`;
+            tableBody.innerHTML += row;
+        });
+        bindCommentButtons();
+    }
+    function viewTradeDetails(tradeId) {
+        const trade = tradesCache.find(item => Number(item.id) === Number(tradeId));
+        if (!trade) {
+            alert("Trade introuvable.");
+            return;
+        }
+        document.getElementById("editTradeModalTitle").innerText = `Edit Trade - ${trade.symbol || ""}`;
+        document.getElementById("edit_trade_id").value = trade.id || "";
+        document.getElementById("account_name").value = trade.account_name || currentAccountName || "";
+        document.getElementById("trade_date").value = trade.trade_date || "";
+        document.getElementById("edit_symbol").value = trade.symbol || "";
+        document.getElementById("edit_type").value = trade.type || "";
+        document.getElementById("edit_session").value = trade.session || "";
+        document.getElementById("edit_entry_price").value = trade.entry_price ?? "";
+        document.getElementById("edit_stop_loss").value = trade.stop_loss ?? "";
+        document.getElementById("edit_take_profit").value = trade.take_profit ?? "";
+        document.getElementById("edit_exit_price").value = trade.exit_price ?? "";
+        document.getElementById("edit_pnl").value = trade.pnl ?? "";
+    }
+
+    document.getElementById("editTradeForm")?.addEventListener("submit", async function (event) {
+        event.preventDefault();
+        const tradeId = document.getElementById("edit_trade_id").value;
+        if (!tradeId) {
+            alert("Aucun trade selectionne.");
+            return;
+        }
+        try {
+            const formData = new FormData(this);
+            formData.append("savechanges", "1");
+            const response = await fetch("http://localhost/www/Tracking-journal/dbusers.php", {
+                method: "POST",
+                body: formData
+            });
+            const responseText = await response.text();
+            let result;
+            try {
+                result = JSON.parse(responseText);
+            } catch (jsonError) {
+                alert(`Erreur serveur: ${responseText}`);
+                return;
+            }
+            if (!result.success) {
+                alert("Erreur pendant la mise a jour: " + (result.error || "Unknown error"));
+                return;
+            }
+            bootstrap.Modal.getInstance(document.getElementById("myModal"))?.hide();
+            if (currentAccountName) {
+                await loadAnalytics(currentAccountName);
+            }
+        } catch (error) {
+            alert("Erreur reseau pendant la mise a jour: " + error.message);
+        }
+    });
+
+    function createPnLChart(trades) {
+        const ctx = document.getElementById('pnlChart').getContext('2d');
+
+        if (pnlChart) {
+            pnlChart.destroy();
+        }
+
+        let cumulativePnL = 0;
+        const chartData = {
+            labels: [],
+            datasets: [{
+                label: 'P&L Evolution',
+                data: [],
+                borderColor: 'rgb(75, 192, 192)',
+                backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                tension: 0.1
+            }]
+        };
+
+        const sortedTradesForChart = trades
+            .filter(trade => trade.symbol !== 'TOTAL')
+            .slice()
+            .sort((a, b) => {
+                const dateDiff = new Date(a.trade_date) - new Date(b.trade_date);
+                if (dateDiff !== 0) {
+                    return dateDiff;
+                }
+                return (parseInt(a.id, 10) || 0) - (parseInt(b.id, 10) || 0);
+            });
+
+        sortedTradesForChart.forEach(trade => {
+            if (trade.symbol !== 'TOTAL') {
+                cumulativePnL += parseFloat(trade.pnl);
+                chartData.labels.push(trade.trade_date);
+                chartData.datasets[0].data.push(cumulativePnL);
+            }
+        });
+
+        pnlChart = new Chart(ctx, {
+            type: 'line',
+            data: chartData,
+            options: {
+                responsive: true,
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Profit & Loss Evolution'
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: false,
+                        ticks: {
+                            callback: function (value) {
+                                return value.toFixed(2);
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    let currentAssetAnalytics = null;
+    let assetExposureChart = null;
+
+    function updateAssetExposureView(analytics) {
+        if (!analytics) {
+            return;
+        }
+        currentAssetAnalytics = analytics;
+        const selectedView = document.getElementById('exposureTimeframeSelect')?.value || 'symbol';
+        let exposureData = [];
+        let chartLabel = '';
+
+        switch (selectedView) {
+            case 'daily':
+                exposureData = analytics.daily_symbol_exposure || [];
+                chartLabel = 'P&L by asset - Daily';
+                break;
+            case 'weekly':
+                exposureData = analytics.weekly_symbol_exposure || [];
+                chartLabel = 'P&L by asset - Weekly';
+                break;
+            case 'monthly':
+                exposureData = analytics.monthly_symbol_exposure || [];
+                chartLabel = 'P&L by asset - Monthly';
+                break;
+            case 'yearly':
+                exposureData = analytics.yearly_symbol_exposure || [];
+                chartLabel = 'P&L by asset - Yearly';
+                break;
+            default:
+                exposureData = analytics.symbol_exposure || [];
+                chartLabel = 'P&L by asset - Global';
+                break;
+        }
+
+        const chartRows = exposureData.slice(0, 10);
+        assetExposureRowsStore = chartRows.slice();
+        assetExposureSort = { column: 'symbol', direction: 'asc' };
+        renderAssetExposureTable();
+        renderAssetExposureChart(chartRows, chartLabel);
+    }
+
+    function renderAssetExposureChart(exposureData, chartLabel) {
+        const ctx = document.getElementById('assetExposureChart')?.getContext('2d');
+        if (!ctx) return;
+
+        const labels = exposureData.map(item => `${item.symbol}${item.period ? ' - ' + item.period : ''}`);
+        const data = exposureData.map(item => parseFloat(item.pnl) || 0);
+
+        if (assetExposureChart) {
+            assetExposureChart.destroy();
+        }
+
+        assetExposureChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels,
+                datasets: [{
+                    label: chartLabel,
+                    data,
+                    backgroundColor: labels.map(label => label.includes('-') ? 'rgba(54, 162, 235, 0.7)' : 'rgba(255, 99, 132, 0.7)'),
+                    borderColor: labels.map(label => label.includes('-') ? 'rgba(54, 162, 235, 1)' : 'rgba(255, 99, 132, 1)'),
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { display: false },
+                    title: { display: true, text: chartLabel }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: value => value.toFixed(2)
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    function getDrawdownPercent(row, computedValue = null) {
+        if (computedValue !== null && computedValue !== undefined && computedValue !== '') {
+            return `${formatNumber(computedValue)}%`;
+        }
+        const rawDrawdown =
+            row?.max_drawdown ??
+            row?.drawdown ??
+            row?.maxDrawdown ??
+            row?.max_dd;
+        if (rawDrawdown === null || rawDrawdown === undefined || rawDrawdown === '') {
+            return "-";
+        }
+        return `${formatNumber(rawDrawdown)}%`;
+    }
+
+    function formatNumber(value, decimals = 2) {
+        if (value === null || value === undefined || value === '') {
+            return '0';
+        }
+        let number = parseFloat(value);
+        if (Number.isNaN(number)) {
+            return '0';
+        }
+        return number.toFixed(decimals);
+    }
+
+    function formatDate(dateString) {
+        const date = new Date(dateString);
+        return date.toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric'
+        });
+    }
+
+    function formatExactInputValue(value) {
+        if (value === null || value === undefined || value === '') {
+            return '';
+        }
+        return String(value);
+    }
+
+    function bindCommentButtons() {
+        document.querySelectorAll('.btn-icon-note').forEach(button => {
+            button.addEventListener('click', () => {
+                const tradeId = button.dataset.tradeId;
+                const symbol = button.dataset.tradeSymbol;
+                openCommentModal(tradeId, symbol);
+            });
+        });
+    }
+
+    let currentTradeKey = null;
+    let modalNoteImages = [];
+
+    function normalizeCommentStorage(data) {
+        if (!data || typeof data !== 'object') {
+            return { comment: '', images: [] };
+        }
+        const comment = typeof data.comment === 'string' ? data.comment : '';
+        let images = [];
+        if (Array.isArray(data.images)) {
+            images = data.images
+                .filter((img) => img && img.dataUrl)
+                .map((img) => ({ dataUrl: img.dataUrl, name: img.name || '' }));
+        } else if (data.imageDataUrl) {
+            images = [{ dataUrl: data.imageDataUrl, name: data.imageName || '' }];
+        }
+        return { comment, images };
+    }
+
+    function getCommentData(tradeId) {
+        try {
+            const raw = localStorage.getItem(`analytics_trade_${tradeId}`);
+            if (!raw) {
+                return null;
+            }
+            return normalizeCommentStorage(JSON.parse(raw));
+        } catch (error) {
+            return null;
+        }
+    }
+
+    function hasNoteContent(commentData) {
+        if (!commentData) {
+            return false;
+        }
+        const hasText = !!(commentData.comment && commentData.comment.trim());
+        const hasImages = Array.isArray(commentData.images) && commentData.images.length > 0;
+        return hasText || hasImages;
+    }
+
+    function escapeHtmlAttr(text) {
+        if (!text) {
+            return '';
+        }
+        return String(text)
+            .replace(/&/g, '&amp;')
+            .replace(/"/g, '&quot;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;');
+    }
+
+    function renderModalImagePreview() {
+        const preview = document.getElementById('imagePreview');
+        if (!modalNoteImages.length) {
+            preview.innerHTML = '<p class="text-muted">No images yet. Use the file picker to add one or more screenshots.</p>';
+            return;
+        }
+        preview.innerHTML =
+            modalNoteImages
+                .map(
+                    (img, i) => `
+            <div class="d-inline-block position-relative me-2 mb-2">
+                <img src="${img.dataUrl}" class="note-image-thumb" alt="${escapeHtmlAttr(img.name || 'Attachment')}"
+                     onclick="openFullscreenImageFromModal(${i})">
+                <button type="button" class="btn btn-sm btn-danger note-image-remove" onclick="removeModalNoteImage(${i})" aria-label="Remove image">×</button>
+            </div>`
+                )
+                .join('') +
+            '<p class="text-muted small mt-2 mb-0">Click an image to enlarge. Remove with × if needed, then Save.</p>';
+    }
+
+    function removeModalNoteImage(index) {
+        modalNoteImages.splice(index, 1);
+        renderModalImagePreview();
+    }
+
+    function openFullscreenImageFromModal(index) {
+        const img = modalNoteImages[index];
+        if (img && img.dataUrl) {
+            openFullscreenImage(img.dataUrl);
+        }
+    }
+
+    function openCommentModal(tradeId, symbol) {
+        currentTradeKey = tradeId;
+        const commentData = getCommentData(tradeId);
+        document.getElementById('commentModalLabel').innerText = `Note & Attachment - ${symbol}`;
+        document.getElementById('tradeComment').value = commentData?.comment || '';
+        document.getElementById('tradeImageFile').value = '';
+        modalNoteImages = (commentData?.images || []).map((img) => ({
+            dataUrl: img.dataUrl,
+            name: img.name || ''
+        }));
+        renderModalImagePreview();
+        const modal = new bootstrap.Modal(document.getElementById('commentModal'));
+        modal.show();
+    }
+
+    function openFullscreenImage(imageDataUrl) {
+        document.getElementById('fullscreenImage').src = imageDataUrl;
+        const modal = new bootstrap.Modal(document.getElementById('fullscreenImageModal'));
+        modal.show();
+    }
+
+    function saveCommentAndImage() {
+        if (!currentTradeKey) {
+            return;
+        }
+        const comment = document.getElementById('tradeComment').value.trim();
+        const saveData = {
+            comment,
+            images: modalNoteImages.map((img) => ({ dataUrl: img.dataUrl, name: img.name || '' }))
+        };
+        localStorage.setItem(`analytics_trade_${currentTradeKey}`, JSON.stringify(saveData));
+        updateTableRow(currentTradeKey, saveData);
+        const modalEl = document.getElementById('commentModal');
+        bootstrap.Modal.getInstance(modalEl)?.hide();
+    }
+
+    function deleteCommentData() {
+        if (!currentTradeKey) {
+            return;
+        }
+        if (confirm('Are you sure you want to delete this note and all attached images?')) {
+            localStorage.removeItem(`analytics_trade_${currentTradeKey}`);
+            modalNoteImages = [];
+            updateTableRow(currentTradeKey, { comment: '', images: [] });
+            const modalEl = document.getElementById('commentModal');
+            bootstrap.Modal.getInstance(modalEl)?.hide();
+        }
+    }
+
+    document.getElementById('tradeImageFile')?.addEventListener('change', function () {
+        const input = this;
+        const imageFiles = Array.from(input.files || []).filter((f) => f.type.startsWith('image/'));
+        if (!imageFiles.length) {
+            input.value = '';
+            return;
+        }
+        let pending = imageFiles.length;
+        imageFiles.forEach((file) => {
+            const reader = new FileReader();
+            reader.onload = function (event) {
+                modalNoteImages.push({ dataUrl: event.target.result, name: file.name });
+                pending -= 1;
+                if (pending === 0) {
+                    input.value = '';
+                    renderModalImagePreview();
+                }
+            };
+            reader.readAsDataURL(file);
+        });
+    });
+
+    async function deleteTradeConfirm(tradeId) {
+        if (!confirm('Are you sure you want to delete this trade? This action cannot be undone.')) {
+            return;
+        }
+        try {
+            const formData = new FormData();
+            formData.append('deleteTrade', tradeId);
+            const response = await fetch('http://localhost/www/Tracking-journal/dbusers.php', {
+                method: 'POST',
+                body: formData
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const responseText = await response.text();
+            let result;
+            try {
+                result = JSON.parse(responseText);
+            } catch (jsonError) {
+                console.error('JSON Parse Error:', responseText);
+                alert(`Server error: ${responseText}`);
+                return;
+            }
+
+            if (result.success) {
+                // Recharger les analyses du compte actuel
+                const accountName = document.getElementById("analyticsTitle").innerText.replace('Account analytics: ', '');
+                if (accountName) {
+                    loadAnalytics(accountName);
+                }
+            } else {
+                alert('Error while deleting trade: ' + (result.error || 'Unknown error'));
+            }
+        } catch (error) {
+            console.error('Network Error:', error);
+            alert('Network error while deleting: ' + error.message);
+        }
+    }
+    function updateTableRow(tradeId, commentData) {
+        const button = document.querySelector(`[data-trade-id="${tradeId}"]`);
+        if (!button) {
+            return;
+        }
+        const normalized = normalizeCommentStorage(commentData);
+        const hasNote = hasNoteContent(normalized);
+
+        button.innerHTML = `
+            <span style="font-size: 1.5rem; color: ${hasNote ? '#28a745' : '#6c757d'};">
+                ${hasNote ? '✓ 📝' : '📝'}
+            </span>
+        `;
+        button.title = hasNote ? 'Edit note' : 'Add note';
+    }
+</script>
+
+</html>

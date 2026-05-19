@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Journal de trading</title>
+    <link rel="stylesheet" href="../bootstrap5/bootstrap.min.css">
+    <link rel="stylesheet" href="theme-trackrecord.css">
+    <script src="../bootstrap5/bootstrap.bundle.min.js"></script>
+    <link rel="stylesheet" href="../bootstrap5/font-awesome.min.css">
+</head>
+
+<body onload="Load()">
+    <h1 class="text-center bg-primary text-white">Please create your trading account</h1>
+    <div class="container">
+        <form class="form-control w-50 m-auto mt-5" method="post" action="dbusers.php">
+            <input type="text" id="username" name="username" hidden>
+            <div class="mb-3 mt-3">
+                <label for="account_name" class="form-label">Account name:</label>
+                <input type="text" class="form-control" id="account_name" placeholder="Enter account name"
+                    name="account_name">
+            </div>
+            <div class="mb-3">
+                <label for="broker" class="form-label">Broker:</label>
+                <input type="text" class="form-control" id="broker" placeholder="Enter your broker" name="broker">
+            </div>
+            <div class="mb-3">
+                <label for="initial_balance" class="form-label">Initial balance:</label>
+                <input type="text" class="form-control" id="initial_balance" placeholder="Enter initial balance"
+                    name="initial_balance">
+            </div>
+            <button type="submit" class="btn btn-primary" name="creatAccount">Create account</button>
+            <h1 id="info"></h1>
+        </form>
+    </div>
+</body>
+<script>
+    let userConnected = "";
+    function Load() {
+
+        if (window.localStorage.getItem("userConnected")) {
+            console.log(window.localStorage.getItem("userConnected"));
+            userConnected = window.localStorage.getItem("userConnected");
+            document.getElementById("username").value = userConnected;
+        }
+        
+    }
+</script>
+
+</html>

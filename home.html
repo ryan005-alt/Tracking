@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Journal de trading</title>
+    <link rel="stylesheet" href="../bootstrap5/bootstrap.min.css">
+    <link rel="stylesheet" href="theme-trackrecord.css">
+    <script src="../bootstrap5/bootstrap.bundle.min.js"></script>
+    <link rel="stylesheet" href="../bootstrap5/font-awesome.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 16px;
+        }
+
+        .kpi-container {
+            display: flex;
+            justify-content: space-between;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin-top: 10px;
+            margin-bottom: 20px;
+        }
+
+        .kpi-card {
+            background-color: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+            flex: 1;
+            min-width: 200px;
+            box-shadow: var(--shadow);
+            transition: transform 0.2s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .kpi-card:hover {
+            transform: translateY(-3px);
+            border-color: var(--primary);
+        }
+
+        .kpi-title {
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            color: var(--muted);
+            margin-bottom: 8px;
+            letter-spacing: 0.5px;
+        }
+
+        .kpi-value {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: var(--text);
+            margin-bottom: 5px;
+        }
+
+        .kpi-trend {
+            font-size: 0.85rem;
+        }
+
+        .neutral {
+            color: var(--muted);
+        }
+
+        .donut-wrapper {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 60px;
+            height: 60px;
+        }
+
+        .donut-chart {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: conic-gradient(var(--positive-color) 0deg 223.2deg, var(--negative-color) 223.2deg 360deg);
+            mask-image: radial-gradient(circle, transparent 50%, black 51%);
+            -webkit-mask-image: radial-gradient(circle, transparent 50%, black 51%);
+        }
+
+        .dashboard-panels {
+            display: flex;
+            gap: 20px;
+            margin-top: 24px;
+            align-items: stretch;
+        }
+
+        .equity-chart-container {
+            flex: 2;
+            background-size: cover;
+            background-position: center;
+            padding: 20px;
+        }
+
+        .latest-trades-container {
+            flex: 1;
+            padding: 20px;
+        }
+
+        .section-title {
+            color: var(--text);
+            text-align: center;
+            margin-bottom: 20px;
+            font-weight: 700;
+            letter-spacing: 0.3px;
+        }
+
+        .trade-item {
+            margin-bottom: 15px;
+            padding: 10px;
+            background: var(--surface-soft) !important;
+            border-radius: 8px !important;
+        }
+
+        .trade-meta {
+            color: var(--muted);
+        }
+        .navbar-logo {
+            max-height: 40px;
+            width: auto;
+        }
+        .d-none{
+            font-size: 1rem;
+        }
+        @media (max-width: 992px) {
+            .dashboard-panels {
+                flex-direction: column;
+            }
+        }
+        
+    </style>
+</head>
+
+<body onload="Load()">
+    <nav class="navbar navbar-expand-sm bg-light">
+
+        <div class="container-fluid">
+            <a class="navbar-brand d-flex align-items-center" href="./home.html">
+                <!-- Replace the src with your logo path; keep the id to change via JS if needed -->
+                <img id="siteLogo" src="../vidéo&track/3D Blue Background Design.jfif" alt="Logo" class="navbar-logo me-2" onerror="this.style.display='none'">
+                <span class="d-none d-lg-inline">My Trading <br> Journal</span>
+            </a>
+            <!-- Links -->
+            <ul class="navbar-nav">
+                <li class="nav-item">
+                    <a class="nav-link" href="./home.html" active>Dashboard</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="./analytics.html">Analytics</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link btn btn-outline-danger" onclick="Logout()">Sign out</a>
+                </li>
+            </ul>
+        </div>
+        <div>
+            <button type="button" class="btn me-2 theme-toggle-btn" onclick="toggleTheme()" id="themeToggleBtn" aria-label="Toggle theme" title="Toggle theme">
+                <span class="theme-icon" aria-hidden="true"></span>
+            </button>
+        </div>
+        <div class="dropdown float-end">
+            <button type="button" class="btn btn-primary dropdown-toggle manage-account-btn" data-bs-toggle="dropdown">
+                Manage account
+            </button>
+            <ul class="dropdown-menu manage-account-menu" id="accounts">
+            </ul>
+        </div>
+
+    </nav>
+    <div class="kpi-container" id="kpiContainer">
+        <!-- Les KPIs seront remplis dynamiquement par JavaScript -->
+    </div>
+
+    <!-- Conteneur pour la courbe d'équité et les derniers trades -->
+    <div class="dashboard-panels">
+        <div class="equity-chart-container">
+            <h3 class="section-title">Equity Curve</h3>
+            <canvas id="equityChart"></canvas>
+        </div>
+
+        <div class="latest-trades-container">   
+            <h3 class="section-title">Latest Trades</h3>
+            <div class="trade-item">
+                <div class="positive-value">Trade 1: AAPL</div>
+                <div class="trade-meta">Date: 2026-03-15 | P&L: +150 €</div>
+            </div>
+            <div class="trade-item">
+                <div class="negative-value">Trade 2: TSLA</div>
+                <div class="trade-meta">Date: 2026-03-14 | P&L: -75 €</div>
+            </div>
+            <div class="trade-item">
+                <div class="positive-value">Trade 3: GOOGL</div>
+                <div class="trade-meta">Date: 2026-03-13 | P&L: +200 €</div>
+            </div>
+            <a href="addtrade.html" class="btn btn-primary float-end">Add Trade</a>
+        </div>
+    </div>
+
+</body>
+<script>
+    let userconnected = "";
+    let currentAccountName = "";
+    applySavedTheme();
+    updateThemeToggleText();
+    function getThemeVars() {
+        const cssVars = getComputedStyle(document.documentElement);
+        return {
+            positiveColor: cssVars.getPropertyValue('--positive-color').trim(),
+            negativeColor: cssVars.getPropertyValue('--negative-color').trim(),
+            textColor: cssVars.getPropertyValue('--text').trim(),
+            borderColor: cssVars.getPropertyValue('--border').trim()
+        };
+    }
+    const { positiveColor, negativeColor, textColor, borderColor } = getThemeVars();
+    const ctx = document.getElementById('equityChart').getContext('2d');
+    const equityChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+            datasets: [{
+                label: 'Equity',
+                data: [10000, 10200, 10100, 10500, 10700, 10600, 10900, 11100, 11000, 11300, 11500, 11700],
+                borderColor: positiveColor,
+                backgroundColor: `${positiveColor}22`,
+                fill: true,
+                tension: 0.1
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    labels: {
+                        color: textColor
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    ticks: {
+                        color: textColor
+                    },
+                    grid: {
+                        color: borderColor
+                    }
+                },
+                y: {
+                    ticks: {
+                        color: textColor
+                    },
+                    grid: {
+                        color: borderColor
+                    }
+                }
+            }
+        }
+    });
+    function Logout() {
+        localStorage.clear();
+		window.location.assign("./")
+    }
+    function Load() {
+        if (window.localStorage.getItem("userConnected")) {
+            userconnected = window.localStorage.getItem("userConnected");
+            console.log(userconnected);
+            getData();
+        }
+    }
+    function applySavedTheme() {
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme === 'light' || savedTheme === 'dark') {
+            document.documentElement.setAttribute('data-theme', savedTheme);
+            return;
+        }
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        document.documentElement.setAttribute('data-theme', prefersDark ? 'dark' : 'light');
+    }
+
+    function toggleTheme() {
+        const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
+        const nextTheme = currentTheme === 'dark' ? 'light' : 'dark';
+        document.documentElement.setAttribute('data-theme', nextTheme);
+        localStorage.setItem('theme', nextTheme);
+        updateThemeToggleText();
+        refreshThemeVisuals();
+    }
+
+    function updateThemeToggleText() {
+        const btn = document.getElementById('themeToggleBtn');
+        if (!btn) return;
+        const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
+        const nextLabel = currentTheme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode';
+        btn.setAttribute('aria-label', nextLabel);
+        btn.setAttribute('title', nextLabel);
+    }
+    function refreshThemeVisuals() {
+        const theme = getThemeVars();
+        equityChart.data.datasets[0].borderColor = theme.positiveColor;
+        equityChart.data.datasets[0].backgroundColor = `${theme.positiveColor}22`;
+        equityChart.options.plugins.legend.labels.color = theme.textColor;
+        equityChart.options.scales.x.ticks.color = theme.textColor;
+        equityChart.options.scales.y.ticks.color = theme.textColor;
+        equityChart.options.scales.x.grid.color = theme.borderColor;
+        equityChart.options.scales.y.grid.color = theme.borderColor;
+        equityChart.update();
+        if (currentAccountName) {
+            selectAccount(currentAccountName);
+        }
+    }
+    async function getData() {
+        try {
+            let resultat = await fetch(`http://localhost/www/Tracking-journal/account.php?account=${encodeURIComponent(userconnected)}`);
+            let datas = await resultat.json();
+            console.log(datas);
+            document.getElementById("accounts").innerHTML = `
+                <li><a class="dropdown-item" href="addaccount.html">Add</a></li>
+                <li><hr class="dropdown-divider"></li>`;
+            datas.forEach(element => {
+                document.getElementById("accounts").innerHTML += `<li><a class="dropdown-item" href="#" onclick="selectAccount('${element.account_name}')">${element.account_name}</a></li>`;
+            });
+            if (datas.length > 0) {
+                selectAccount(datas[0].account_name);
+            }
+        } catch (error) {
+            alert(error);
+        }
+    }
+
+    async function selectAccount(accountName) {
+        currentAccountName = accountName;
+        try {
+            let tradesResult = await fetch(`http://localhost/www/Tracking-journal/trades.php?trades=${encodeURIComponent(accountName)}`);
+            let tradesData = await tradesResult.json();
+            console.log(tradesData);
+            
+            let trades = tradesData
+                .filter(t => t.symbol !== 'TOTAL')
+                .sort((a, b) => {
+                    const dateDiff = new Date(a.trade_date) - new Date(b.trade_date);
+                    if (dateDiff !== 0) {
+                        return dateDiff;
+                    }
+                    return (parseInt(a.id, 10) || 0) - (parseInt(b.id, 10) || 0);
+                });
+            
+            // Récupérer le solde initial du compte
+            let accountsResult = await fetch(`http://localhost/www/Tracking-journal/account.php?account=${encodeURIComponent(userconnected)}`);
+            let accountsData = await accountsResult.json();
+            let initialBalance = 0;
+            accountsData.forEach(account => {
+                if (account.account_name === accountName) {
+                    initialBalance = parseFloat(account.initial_balance) || 0;
+                }
+            });
+            
+            let totalPnL = 0;
+            let winningTrades = 0;
+            let losingTrades = 0;
+            let totalWins = 0;
+            let totalLosses = 0;
+            let maxEquity = initialBalance;
+            let minEquity = initialBalance;
+            let runningEquity = initialBalance;
+            let maxDrawdown = 0;
+            let totalR = 0;
+            let equityPoints = [initialBalance];
+            let dateLabels = ['Start'];
+
+            trades.forEach(trade => {
+                totalPnL += parseFloat(trade.pnl) || 0;
+                runningEquity += parseFloat(trade.pnl) || 0;
+                totalR += parseFloat(trade.rr) || 0;
+                
+                // Calculer le drawdown courant
+                let currentDrawdown = ((maxEquity - runningEquity) / maxEquity) * 100;
+                if (currentDrawdown > maxDrawdown) {
+                    maxDrawdown = currentDrawdown;
+                }
+                
+                if (runningEquity > maxEquity) {
+                    maxEquity = runningEquity;
+                }
+                
+                equityPoints.push(runningEquity);
+                dateLabels.push(trade.trade_date.substring(5));
+                
+                if (parseFloat(trade.pnl) > 0) {
+                    winningTrades++;
+                    totalWins += parseFloat(trade.pnl);
+                } else if (parseFloat(trade.pnl) < 0) {
+                    losingTrades++;
+                    totalLosses += Math.abs(parseFloat(trade.pnl));
+                }
+            });
+
+            let totalTrades = trades.length;
+            let winRate = totalTrades > 0 ? (winningTrades / totalTrades * 100).toFixed(1) : 0;
+            let avgWin = winningTrades > 0 ? (totalWins / winningTrades).toFixed(2) : 0;
+            let avgLoss = losingTrades > 0 ? (totalLosses / losingTrades).toFixed(2) : 0;
+
+            displayKPIs(totalPnL, winRate, totalWins, totalLosses, avgWin, avgLoss, maxDrawdown, winningTrades, totalTrades, totalR);
+            displayLatestTrades(trades, accountName);
+            updateEquityChart(equityPoints, dateLabels);
+            
+        } catch (error) {
+            console.error(error);
+        }
+    }
+
+    function updateEquityChart(equityPoints, dateLabels) {
+        // Limiter les labels à 12 pour la lisibilité
+        let step = Math.ceil(equityPoints.length / 12);
+        let displayLabels = [];
+        let displayPoints = [];
+        
+        for (let i = 0; i < equityPoints.length; i += step) {
+            displayLabels.push(dateLabels[i]);
+            displayPoints.push(equityPoints[i]);
+        }
+        // Ajouter le dernier point si absent
+        if (displayLabels[displayLabels.length - 1] !== dateLabels[dateLabels.length - 1]) {
+            displayLabels.push(dateLabels[dateLabels.length - 1]);
+            displayPoints.push(equityPoints[equityPoints.length - 1]);
+        }
+        
+        equityChart.data.labels = displayLabels;
+        equityChart.data.datasets[0].data = displayPoints;
+        equityChart.update();
+    }
+
+    function displayKPIs(totalPnL, winRate, totalWins, totalLosses, avgWin, avgLoss, maxDrawdown, winningTrades, totalTrades, totalR) {
+        const theme = getThemeVars();
+        const pnlClass = totalPnL >= 0 ? 'positive' : 'negative';
+        const drawdownClass = maxDrawdown > 0 ? 'negative' : 'neutral';
+        const ratioValue = avgLoss > 0 ? (avgWin / avgLoss).toFixed(1) : 0;
+        const totalRClass = totalR >= 0 ? 'positive' : 'negative';
+        
+        const losingTrades = totalTrades - winningTrades;
+        const donutDegrees = (winRate / 100) * 360;
+        
+        document.getElementById("kpiContainer").innerHTML = `
+            <div class="kpi-card">
+                <div class="kpi-title">Net P&L</div>
+                <div class="kpi-value ${pnlClass}">${totalPnL >= 0 ? '+' : ''}${totalPnL.toFixed(2)}</div>
+                <div class="kpi-trend neutral">${totalPnL >= 0 ? '+' : ''}${(totalPnL > 0 ? (totalPnL / 100).toFixed(1) : 0)}% Gain</div>
+            </div>
+
+            <div class="kpi-card">
+                <div class="kpi-title">Win Rate</div>
+                <div class="kpi-value neutral">${winRate}%</div>
+                <div class="kpi-trend neutral">${winningTrades} Winners / ${totalTrades} Total</div>
+                <div class="donut-wrapper">
+                    <div class="donut-chart" style="background: conic-gradient(${theme.positiveColor} 0deg ${donutDegrees}deg, ${theme.negativeColor} ${donutDegrees}deg 360deg);" title="Winners: ${winRate}% | Losers: ${(100 - winRate).toFixed(1)}%"></div>
+                </div>
+            </div>
+
+            <div class="kpi-card">
+                <div class="kpi-title">Avg Win / Avg Loss</div>
+                <div class="kpi-value neutral">1:${ratioValue}</div>
+                <div class="kpi-trend positive">Win: ${avgWin} / Loss: ${avgLoss}</div>
+            </div>
+
+            <div class="kpi-card">
+                <div class="kpi-title">Total R</div>
+                <div class="kpi-value ${totalRClass}">${totalR >= 0 ? '+' : ''}${totalR.toFixed(2)}R</div>
+                <div class="kpi-trend neutral">Accumulated risk-reward</div>
+            </div>
+
+            <div class="kpi-card">
+                <div class="kpi-title">Max Drawdown</div>
+                <div class="kpi-value ${drawdownClass}">-${maxDrawdown.toFixed(2)}%</div>
+                <div class="kpi-trend neutral">Maximum equity reduction</div>
+            </div>
+        `;
+    }
+
+    function displayLatestTrades(trades, accountName) {
+        let latestTradesHTML = '';
+        const latestTrades = trades
+            .slice()
+            .sort((a, b) => {
+                const dateDiff = new Date(b.trade_date) - new Date(a.trade_date);
+                if (dateDiff !== 0) {
+                    return dateDiff;
+                }
+                return (parseInt(b.id, 10) || 0) - (parseInt(a.id, 10) || 0);
+            })
+            .slice(0, 3);
+
+        latestTrades.forEach(trade => {
+            const pnlClass = parseFloat(trade.pnl) >= 0 ? 'positive-value' : 'negative-value';
+            const pnlSign = parseFloat(trade.pnl) >= 0 ? '+' : '';
+            latestTradesHTML += `
+                <div class="trade-item">
+                    <div class="${pnlClass}">${trade.symbol}</div>
+                    <div class="trade-meta">Date: ${trade.trade_date} | P&L: ${pnlSign}${parseFloat(trade.pnl).toFixed(2)} </div>
+                </div>
+            `;
+        });
+        
+        const latestTradesContainer = document.querySelector('.latest-trades-container');
+        if (latestTradesContainer) {
+            latestTradesContainer.innerHTML = `
+                <h3 class="section-title">Latest Trades</h3>
+                ${latestTradesHTML}
+                <a href="addtrade.html?account=${encodeURIComponent(accountName)}" class="btn btn-primary float-end">Add Trade</a>
+            `;
+        }
+    }
+</script>
+
+</html>
